@@ -3,6 +3,32 @@
 
 #include "StandsSystem/ASeatSpawnerBase.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Components/InstancedStaticMeshComponent.h"
+
+// if a 2D point is inside an any polygon
+static bool IsPointInPolygon2D(const FVector2D& Point, const TArray<FVector2D>& PolygonVertices)
+{
+	bool bIsInside = false;
+	const int32 NumVerts = PolygonVertices.Num();
+	if (NumVerts < 3)
+	{
+		return false; // invalid polygon
+	}
+
+	for (int32 i = 0, j = NumVerts - 1; i < NumVerts; j = i++)
+	{
+		const FVector2D& Vi = PolygonVertices[i];
+		const FVector2D& Vj = PolygonVertices[j];
+
+		// odd-even rule
+		// if radial line crosses line segment (Vi.Y, Vj.Y)
+		if (((Vi.Y > Point.Y) != (Vj.Y > Point.Y)) && (Point.X < (Vj.X - Vi.X) * (Point.Y - Vi.Y) / (Vj.Y - Vi.Y) + Vi.X))
+		{
+			bIsInside = !bIsInside;
+		}
+	}
+	return bIsInside;
+}
 
 // Sets default values
 AASeatSpawnerBase::AASeatSpawnerBase()
@@ -105,15 +131,32 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 	}
 
 
-	// save the transforms
-	TArray<FTransform> GeneratedTransforms;
 
-	// debug cone ISM
+	// clean all old instances
 	if (DebugSeatGridISM)
 	{
 		DebugSeatGridISM->ClearInstances();
 	}
-	if (bShowDebugCone && DebugSeatGridISM)
+
+
+
+	// 2D spline points
+	TArray<FVector2D> SplinePoints2D;
+
+	if (SeatSpline)
+	{
+		const int32 NumSplinePoints = SeatSpline->GetNumberOfSplinePoints(); //ordered
+		for (int32 i = 0; i < NumSplinePoints; ++i)
+		{
+			const FVector Location3D = SeatSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
+			SplinePoints2D.Add(FVector2D(Location3D.X, Location3D.Y));
+		}
+	}
+
+	// save the transforms
+	TArray<FTransform> GeneratedTransforms;
+
+	if (bShowDebugCone && DebugSeatGridISM && SplinePoints2D.Num() > 2)
 	{
 		DebugSeatGridISM->SetVisibility(true);
 
@@ -135,9 +178,13 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 
 				const FVector FinalPosition = StartPosition + RowOffset + HeightOffset + ColumnOffset;
 
-				const FTransform InstanceTransform(ConeRotation, FinalPosition);
-				
-				GeneratedTransforms.Add(InstanceTransform);
+				const FVector2D SeatLocation2D(FinalPosition.X, FinalPosition.Y);
+				// check if inside spline polygon
+				if (IsPointInPolygon2D(SeatLocation2D, SplinePoints2D))
+				{
+					const FTransform InstanceTransform(ConeRotation, FinalPosition);
+					GeneratedTransforms.Add(InstanceTransform);
+				}
 			}
 		}
 
