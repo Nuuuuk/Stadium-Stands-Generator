@@ -137,25 +137,25 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		}
 	}
 
-	// show debug cone
-	if (bShowDebugCone && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
-	{
-		DebugCone->SetVisibility(true);
+	//// show debug cone
+	//if (bShowDebugCone && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
+	//{
+	//	DebugCone->SetVisibility(true);
 
-		// cone to pt0
-		FVector Point0Location = SeatSpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local);
-		DebugCone->SetRelativeLocation(Point0Location);
+	//	// cone to pt0
+	//	FVector Point0Location = SeatSpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local);
+	//	DebugCone->SetRelativeLocation(Point0Location);
 
-		// to forward direction
-		FRotator TargetDirectionRotator = LocalForwardDirection.Rotation();
-		FRotator MeshOffsetRotator = FRotator(-90.0f, 00.0f, 0.0f);
+	//	// to forward direction
+	//	FRotator TargetDirectionRotator = LocalForwardDirection.Rotation();
+	//	FRotator MeshOffsetRotator = FRotator(-90.0f, 00.0f, 0.0f);
 
-		DebugCone->SetRelativeRotation(TargetDirectionRotator + MeshOffsetRotator);
-	}
-	else
-	{
-		DebugCone->SetVisibility(false);
-	}
+	//	DebugCone->SetRelativeRotation(TargetDirectionRotator + MeshOffsetRotator);
+	//}
+	//else
+	//{
+	//	DebugCone->SetVisibility(false);
+	//}
 
 
 
