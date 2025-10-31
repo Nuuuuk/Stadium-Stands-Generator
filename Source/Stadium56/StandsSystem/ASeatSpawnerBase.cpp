@@ -28,7 +28,25 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	}
 	
 	bShowDebugCone = true;
+	
+	// initialize  offsets
+	ColumnSpacing = 100.0f;
+	RowSpacing = 150.0f;
+	RowHeightOffset = 50.0f;
 
+	// Debug cones ISM
+	DebugSeatGridISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("DebugSeatGridISM"));
+	DebugSeatGridISM->SetupAttachment(RootComponent);
+	DebugSeatGridISM->bHiddenInGame = true;
+	DebugSeatGridISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DebugSeatGridISM->SetVisibility(false);
+
+	if (ConeMeshAsset.Succeeded())
+	{
+		DebugSeatGridISM->SetStaticMesh(ConeMeshAsset.Object);
+	}
+
+	// default spline points
 	if (WITH_EDITOR)
 	{
 		SeatSpline->ClearSplinePoints(false); // clear default pts
@@ -84,6 +102,43 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 	else
 	{
 		DebugCone->SetVisibility(false);
+	}
+
+	// debug cone ISM
+	if (DebugSeatGridISM)
+	{
+		DebugSeatGridISM->ClearInstances();
+	}
+	if (bShowDebugCone && DebugSeatGridISM)
+	{
+		DebugSeatGridISM->SetVisibility(true);
+
+		const FVector ForwardVector = -LocalForwardDirection;
+		const FVector RightVector = FVector::CrossProduct(ForwardVector, FVector::UpVector);
+		// copy the rotaion of cone0
+		const FRotator ConeRotation = LocalForwardDirection.Rotation() + FRotator(-90.0f, 0.0f, 0.0f);
+		const FVector StartPosition = FVector::ZeroVector;
+
+		// Debug 4x4
+		for (int32 Row = 0; Row < 4; ++Row)
+		{
+			const FVector RowOffset = ForwardVector * Row * RowSpacing;
+			const FVector HeightOffset = FVector::UpVector * Row * RowHeightOffset;
+
+			for (int32 Col = 0; Col < 4; ++Col)
+			{
+				const FVector ColumnOffset = RightVector * Col * ColumnSpacing;
+
+				const FVector FinalPosition = StartPosition + RowOffset + HeightOffset + ColumnOffset;
+
+				const FTransform InstanceTransform(ConeRotation, FinalPosition);
+				DebugSeatGridISM->AddInstance(InstanceTransform);
+			}
+		}
+	}
+	else if (DebugSeatGridISM)
+	{
+		DebugSeatGridISM->SetVisibility(false);
 	}
 }
 
