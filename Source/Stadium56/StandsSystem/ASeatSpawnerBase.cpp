@@ -2,6 +2,7 @@
 
 
 #include "StandsSystem/ASeatSpawnerBase.h"
+#include "UObject/ConstructorHelpers.h"
 
 // Sets default values
 AASeatSpawnerBase::AASeatSpawnerBase()
@@ -13,6 +14,21 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	RootComponent = SeatSpline;
 	LocalForwardDirection = FVector::ForwardVector; // (1, 0, 0)
 	
+	// debug cone
+	DebugCone = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DebugCone"));
+	DebugCone->SetupAttachment(RootComponent);
+	DebugCone->bHiddenInGame = true; // Debug
+	DebugCone->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DebugCone->SetVisibility(false);
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> ConeMeshAsset(TEXT("/Engine/BasicShapes/Cone.Cone"));
+	if (ConeMeshAsset.Succeeded())
+	{
+		DebugCone->SetStaticMesh(ConeMeshAsset.Object);
+	}
+	
+	bShowDebugCone = true;
+
 	if (WITH_EDITOR)
 	{
 		SeatSpline->ClearSplinePoints(false); // clear default pts
@@ -32,8 +48,30 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 
 		SeatSpline->UpdateSpline();
 	}
+}
 
+void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
 
+	if (bShowDebugCone && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
+	{
+		DebugCone->SetVisibility(true);
+
+		// cone to pt0
+		FVector Point0Location = SeatSpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local);
+		DebugCone->SetRelativeLocation(Point0Location);
+
+		// to forward direction
+		FRotator TargetDirectionRotator = LocalForwardDirection.Rotation();
+		FRotator MeshOffsetRotator = FRotator(-90.0f, 00.0f, 0.0f);
+
+		DebugCone->SetRelativeRotation(TargetDirectionRotator + MeshOffsetRotator);
+	}
+	else
+	{
+		DebugCone->SetVisibility(false);
+	}
 }
 
 // Called when the game starts or when spawned

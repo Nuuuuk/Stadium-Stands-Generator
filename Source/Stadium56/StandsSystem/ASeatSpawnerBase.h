@@ -15,6 +15,8 @@ class STADIUM56_API AASeatSpawnerBase : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AASeatSpawnerBase();
+	
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -29,8 +31,14 @@ protected:
 	/**
 	 * forward direction of seats (local)¡£
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
 	FVector LocalForwardDirection;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
+	UStaticMeshComponent* DebugCone;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+	bool bShowDebugCone;
 
 public:	
 	// Called every frame
