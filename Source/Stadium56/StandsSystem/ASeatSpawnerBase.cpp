@@ -12,7 +12,7 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 
 	SeatSpline = CreateDefaultSubobject<USplineComponent>(TEXT("SeatSpline"));
 	RootComponent = SeatSpline;
-	LocalForwardDirection = FVector::ForwardVector; // (1, 0, 0)
+	LocalForwardDirection = - FVector::ForwardVector; // (-1, 0, 0)
 	
 	// debug cone
 	DebugCone = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DebugCone"));
@@ -34,9 +34,9 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 		SeatSpline->ClearSplinePoints(false); // clear default pts
 
 		SeatSpline->AddSplinePoint(FVector(0.f, 0.f, 0.f), ESplineCoordinateSpace::Local, false);
-		SeatSpline->AddSplinePoint(FVector(-1000.f, 0.f, 0.f), ESplineCoordinateSpace::Local, false);
-		SeatSpline->AddSplinePoint(FVector(-1000.f, -1000.f, 0.f), ESplineCoordinateSpace::Local, false);
-		SeatSpline->AddSplinePoint(FVector(0.f, -1000.f, 0.f), ESplineCoordinateSpace::Local, false); 
+		SeatSpline->AddSplinePoint(FVector(1000.f, 0.f, 0.f), ESplineCoordinateSpace::Local, false);
+		SeatSpline->AddSplinePoint(FVector(1000.f, 1000.f, 0.f), ESplineCoordinateSpace::Local, false);
+		SeatSpline->AddSplinePoint(FVector(0.f, 1000.f, 0.f), ESplineCoordinateSpace::Local, false); 
 		
 		SeatSpline->SetSplinePointType(0, ESplinePointType::Linear, false);
 		SeatSpline->SetSplinePointType(1, ESplinePointType::Linear, false);
