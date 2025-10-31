@@ -23,13 +23,13 @@ protected:
 	/**
 	 * Spline¡£editable in child bp
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
 	USplineComponent* SeatSpline;
 
 	/**
 	 * forward direction of seats (local)¡£
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
 	FVector LocalForwardDirection;
 
 public:	
