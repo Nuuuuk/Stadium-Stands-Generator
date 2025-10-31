@@ -53,7 +53,20 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
+	
+	// lock point 0
+	if (SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
+	{
+		const FVector Point0Location = SeatSpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local);
 
+		// if it's not at (0,0,0)
+		if (!Point0Location.IsZero())
+		{
+			SeatSpline->SetLocationAtSplinePoint(0, FVector::ZeroVector, ESplineCoordinateSpace::Local, true);
+		}
+	}
+
+	// show debug cone
 	if (bShowDebugCone && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
 	{
 		DebugCone->SetVisibility(true);
