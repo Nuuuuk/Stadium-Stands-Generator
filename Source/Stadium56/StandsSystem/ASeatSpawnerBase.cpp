@@ -104,6 +104,10 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		DebugCone->SetVisibility(false);
 	}
 
+
+	// save the transforms
+	TArray<FTransform> GeneratedTransforms;
+
 	// debug cone ISM
 	if (DebugSeatGridISM)
 	{
@@ -132,8 +136,15 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 				const FVector FinalPosition = StartPosition + RowOffset + HeightOffset + ColumnOffset;
 
 				const FTransform InstanceTransform(ConeRotation, FinalPosition);
-				DebugSeatGridISM->AddInstance(InstanceTransform);
+				
+				GeneratedTransforms.Add(InstanceTransform);
 			}
+		}
+
+		// TArray to fill ISM
+		for (const FTransform& Transform : GeneratedTransforms)
+		{
+			DebugSeatGridISM->AddInstance(Transform);
 		}
 	}
 	else if (DebugSeatGridISM)
