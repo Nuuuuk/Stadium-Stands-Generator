@@ -5,6 +5,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Components/InstancedStaticMeshComponent.h"
 
+// Deprecated
+/**
 // if a 2D point is inside an any polygon
 static bool IsPointInPolygon2D(const FVector2D& Point, const TArray<FVector2D>& PolygonVertices)
 {
@@ -28,6 +30,31 @@ static bool IsPointInPolygon2D(const FVector2D& Point, const TArray<FVector2D>& 
 		}
 	}
 	return bIsInside;
+}
+**/
+
+// points on a 2D row that are inside a polygon
+static void FindVerticalScanlineIntersections(float ScanlineX,
+	const TArray<FVector2D>& PolygonVertices,
+	TArray<float>& OutYIntersections)
+{
+	const int32 NumVerts = PolygonVertices.Num();
+	if (NumVerts < 3)
+	{
+		return;
+	}
+
+	for (int32 i = 0, j = NumVerts - 1; i < NumVerts; j = i++)
+	{
+		const FVector2D& Vi = PolygonVertices[i];
+		const FVector2D& Vj = PolygonVertices[j];
+
+		if (((Vi.X > ScanlineX) != (Vj.X > ScanlineX)))
+		{
+			const float IntersectY = (Vj.Y - Vi.Y) * (ScanlineX - Vi.X) / (Vj.X - Vi.X) + Vi.Y;
+			OutYIntersections.Add(IntersectY);
+		}
+	}
 }
 
 // Sets default values
@@ -160,30 +187,43 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 	{
 		DebugSeatGridISM->SetVisibility(true);
 
-		const FVector ForwardVector = -LocalForwardDirection;
-		const FVector RightVector = FVector::CrossProduct(ForwardVector, FVector::UpVector);
 		// copy the rotaion of cone0
 		const FRotator ConeRotation = LocalForwardDirection.Rotation() + FRotator(-90.0f, 0.0f, 0.0f);
-		const FVector StartPosition = FVector::ZeroVector;
 
-		// Debug 4x4
+		// save the intersections of a row and the spline
+		TArray<float> YIntersections; 
+
+		// Debug 4x5
 		for (int32 Row = 0; Row < 4; ++Row)
 		{
-			const FVector RowOffset = ForwardVector * Row * RowSpacing;
-			const FVector HeightOffset = FVector::UpVector * Row * RowHeightOffset;
+			YIntersections.Reset(); //clear previous row
+			
+			const float ScanlineX = Row * RowSpacing;
+			const float Z_Height = Row * RowHeightOffset;
+			FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
 
-			for (int32 Col = 0; Col < 4; ++Col)
+			if (YIntersections.Num() < 2)
 			{
-				const FVector ColumnOffset = RightVector * Col * ColumnSpacing;
+				continue; // no intersections
+			}
 
-				const FVector FinalPosition = StartPosition + RowOffset + HeightOffset + ColumnOffset;
+			YIntersections.Sort();
 
-				const FVector2D SeatLocation2D(FinalPosition.X, FinalPosition.Y);
-				// check if inside spline polygon
-				if (IsPointInPolygon2D(SeatLocation2D, SplinePoints2D))
+			// fill inside. odd-even rule
+			for (int32 i = 0; i < YIntersections.Num(); i += 2)
+			{
+				const float Y_Enter = YIntersections[i];
+				const float Y_Exit = YIntersections[i + 1];
+
+				for (int32 Col = 0; Col < 5; ++Col)
 				{
-					const FTransform InstanceTransform(ConeRotation, FinalPosition);
-					GeneratedTransforms.Add(InstanceTransform);
+					const float SeatY = Col * ColumnSpacing;
+					if (SeatY >= Y_Enter && SeatY <= Y_Exit)
+					{
+						const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
+						const FTransform InstanceTransform(ConeRotation, FinalPosition);
+						GeneratedTransforms.Add(InstanceTransform);
+					}
 				}
 			}
 		}

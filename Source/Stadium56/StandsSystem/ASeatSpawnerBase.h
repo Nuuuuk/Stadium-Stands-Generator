@@ -31,13 +31,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
 	FVector LocalForwardDirection;
 
-	// debug cone
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
-	UStaticMeshComponent* DebugCone;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
-	bool bShowDebugCone;
-
 
 	// collums
 	UPROPERTY(EditAnywhere, Category = "Spawning|Layout", meta = (ClampMin = "1.0"))
@@ -54,6 +47,13 @@ protected:
 	//debug cones ISM
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning|Debug")
 	UInstancedStaticMeshComponent* DebugSeatGridISM;
+
+	// debug cone
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning|Debug")
+	UStaticMeshComponent* DebugCone;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|Debug")
+	bool bShowDebugCone;
 
 public:	
 	// Called every frame
