@@ -168,7 +168,9 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 
 
 	// 2D spline points
-	TArray<FVector2D> SplinePoints2D;
+	TArray<FVector2D> SplinePoints2D; 
+	// 2d spline bounds
+	FBox2D SplineBounds(ForceInit);
 
 	if (SeatSpline)
 	{
@@ -176,7 +178,10 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		for (int32 i = 0; i < NumSplinePoints; ++i)
 		{
 			const FVector Location3D = SeatSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
-			SplinePoints2D.Add(FVector2D(Location3D.X, Location3D.Y));
+			const FVector2D Location2D(Location3D.X, Location3D.Y);
+			SplinePoints2D.Add(Location2D);
+			// add pt to bounds
+			SplineBounds += Location2D;
 		}
 	}
 
@@ -193,8 +198,13 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		// save the intersections of a row and the spline
 		TArray<float> YIntersections; 
 
+		// AABB to get row index range
+		const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
+		const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
+
 		// Debug 4x5
-		for (int32 Row = 0; Row < 4; ++Row)
+		//for (int32 Row = 0; Row < 4; ++Row)
+		for (int32 Row = MinRow; Row <= MaxRow; ++Row)
 		{
 			YIntersections.Reset(); //clear previous row
 			
@@ -215,15 +225,17 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 				const float Y_Enter = YIntersections[i];
 				const float Y_Exit = YIntersections[i + 1];
 
-				for (int32 Col = 0; Col < 5; ++Col)
+				// AABB to get column index range
+				const int32 MinCol = FMath::CeilToInt(Y_Enter / ColumnSpacing);
+				const int32 MaxCol = FMath::FloorToInt(Y_Exit / ColumnSpacing);
+				//for (int32 Col = 0; Col < 5; ++Col)
+				for (int32 Col = MinCol; Col <= MaxCol; ++Col)
 				{
 					const float SeatY = Col * ColumnSpacing;
-					if (SeatY >= Y_Enter && SeatY <= Y_Exit)
-					{
-						const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
-						const FTransform InstanceTransform(ConeRotation, FinalPosition);
-						GeneratedTransforms.Add(InstanceTransform);
-					}
+
+					const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
+					const FTransform InstanceTransform(ConeRotation, FinalPosition);
+					GeneratedTransforms.Add(InstanceTransform);
 				}
 			}
 		}
