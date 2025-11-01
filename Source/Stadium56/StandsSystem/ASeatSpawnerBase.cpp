@@ -180,28 +180,25 @@ TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
 	TArray<float> YIntersections;
 
 	//// AABB to get row index range
-	const int32 MaxRow = FMath::FloorToInt(SplineBounds.GetSize().X / RowSpacing);
+	const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
+	const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
 
-	//Calculate Z offset
-	const int32 RowNum = MaxRow + 1;
+	// Calculate Z offset
 	const float TotalHeight = SplineBounds.Max.Z;
-	if (RowNum > 1)
-	{
-		RowHeightOffset = TotalHeight / (RowNum - 1);
-	}
-	else
-	{
-		RowHeightOffset = 0.0f;
-	}
+	const float SplineXSize = SplineBounds.GetSize().X;
 
-	// Debug 4x5
-	//for (int32 Row = 0; Row < 4; ++Row)
-	for (int32 Row = 0; Row <= MaxRow; ++Row)
+	for (int32 Row = MinRow; Row <= MaxRow; ++Row)
 	{
 		YIntersections.Reset(); //clear previous row
 
 		const float ScanlineX = Row * RowSpacing;
-		const float Z_Height = Row * RowHeightOffset;
+		float Z_Height = 0.0f;
+		if (SplineXSize > KINDA_SMALL_NUMBER) 
+		{
+			// cal the persentage of ScanlineX in aabb
+			const float Alpha = (ScanlineX - SplineBounds.Min.X) / SplineXSize;
+			Z_Height = FMath::Lerp(0.0f, TotalHeight, Alpha);
+		}
 		FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
 
 		if (YIntersections.Num() < 2)
