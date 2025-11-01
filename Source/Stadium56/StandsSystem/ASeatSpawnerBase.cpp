@@ -128,12 +128,32 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 	// lock point 0
 	if (SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
 	{
-		const FVector Point0Location = SeatSpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local);
-
-		// if it's not at (0,0,0)
-		if (!Point0Location.IsZero())
+		bool bSplineWasModified = false;
+		const int32 NumPoints = SeatSpline->GetNumberOfSplinePoints();
+		for (int32 i = 0; i < NumPoints; ++i)
 		{
-			SeatSpline->SetLocationAtSplinePoint(0, FVector::ZeroVector, ESplineCoordinateSpace::Local, true);
+			FVector PointLocation = SeatSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
+			if (i == 0)
+			{
+				if (!PointLocation.IsZero()) // if pt 0 not at origin
+				{
+					SeatSpline->SetLocationAtSplinePoint(0, FVector::ZeroVector, ESplineCoordinateSpace::Local, false);
+					bSplineWasModified = true;
+				}
+			}
+			else
+			{
+				if (PointLocation.Z < 0.0f) // if pt z < 0
+				{
+					SeatSpline->SetLocationAtSplinePoint(i, FVector(PointLocation.X, PointLocation.Y, 0.0f), ESplineCoordinateSpace::Local, false);
+					bSplineWasModified = true;
+				}
+			}
+		}
+
+		if (bSplineWasModified)
+		{
+			SeatSpline->UpdateSpline();
 		}
 	}
 
