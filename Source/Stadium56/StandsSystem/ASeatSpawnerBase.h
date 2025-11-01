@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
-#include "Components/InstancedStaticMeshComponent.h" // debug copy cones
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "ASeatSpawnerBase.generated.h"
 
 UCLASS()
@@ -24,35 +24,34 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Spline¡£editable in child bp
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Spline")
 	USplineComponent* SeatSpline;
 
 	// forward direction of seats (local)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_")
 	FVector LocalForwardDirection;
 
 
 	// collums
-	UPROPERTY(EditAnywhere, Category = "Spawning|Layout", meta = (ClampMin = "1.0"))
+	UPROPERTY(EditAnywhere, Category = "_Parm_|Layout", meta = (ClampMin = "1.0"))
 	float ColumnSpacing;
 
 	// rows
-	UPROPERTY(EditAnywhere, Category = "Spawning|Layout", meta = (ClampMin = "1.0"))
+	UPROPERTY(EditAnywhere, Category = "_Parm_|Layout", meta = (ClampMin = "1.0"))
 	float RowSpacing;
 
 	// row's z offset
-	UPROPERTY(EditAnywhere, Category = "Spawning|Layout", meta = (ClampMin = "0.0"))
+	UPROPERTY(VisibleInstanceOnly, Category = "_Parm_|Layout", meta = (ClampMin = "0.0"))
 	float RowHeightOffset;
 
-	//debug cones ISM
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning|Debug")
-	UInstancedStaticMeshComponent* DebugSeatGridISM;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Debug")
+	UHierarchicalInstancedStaticMeshComponent* SeatGridHISM;
 
 	// debug cone
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning|Debug")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Debug")
 	UStaticMeshComponent* DebugCone;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning|Debug")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
 	bool bShowDebugCone;
 
 public:	

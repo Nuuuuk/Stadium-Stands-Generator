@@ -3,7 +3,7 @@
 
 #include "StandsSystem/ASeatSpawnerBase.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Components/InstancedStaticMeshComponent.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 
 // Deprecated
 /**
@@ -88,15 +88,15 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	RowHeightOffset = 50.0f;
 
 	// Debug cones ISM
-	DebugSeatGridISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("DebugSeatGridISM"));
-	DebugSeatGridISM->SetupAttachment(RootComponent);
-	DebugSeatGridISM->bHiddenInGame = true;
-	DebugSeatGridISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	DebugSeatGridISM->SetVisibility(false);
+	SeatGridHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("SeatGridHISM"));
+	SeatGridHISM->SetupAttachment(RootComponent);
+	SeatGridHISM->bHiddenInGame = true;
+	SeatGridHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SeatGridHISM->SetVisibility(false);
 
 	if (ConeMeshAsset.Succeeded())
 	{
-		DebugSeatGridISM->SetStaticMesh(ConeMeshAsset.Object);
+		SeatGridHISM->SetStaticMesh(ConeMeshAsset.Object);
 	}
 
 	// default spline points
@@ -157,6 +157,7 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		}
 	}
 
+	// Deprecated
 	//// show debug cone
 	//if (bShowDebugCone && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
 	//{
@@ -180,17 +181,17 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 
 
 	// clean all old instances
-	if (DebugSeatGridISM)
+	if (SeatGridHISM)
 	{
-		DebugSeatGridISM->ClearInstances();
+		SeatGridHISM->ClearInstances();
 	}
 
 
 
 	// 2D spline points
 	TArray<FVector2D> SplinePoints2D; 
-	// 2d spline bounds
-	FBox2D SplineBounds(ForceInit);
+	// spline bounds 3d
+	FBox SplineBounds(ForceInit);
 
 	if (SeatSpline)
 	{
@@ -198,19 +199,18 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		for (int32 i = 0; i < NumSplinePoints; ++i)
 		{
 			const FVector Location3D = SeatSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
-			const FVector2D Location2D(Location3D.X, Location3D.Y);
-			SplinePoints2D.Add(Location2D);
+			SplinePoints2D.Add(FVector2D(Location3D.X, Location3D.Y));
 			// add pt to bounds
-			SplineBounds += Location2D;
+			SplineBounds += Location3D;
 		}
 	}
 
 	// save the transforms
 	TArray<FTransform> GeneratedTransforms;
 
-	if (bShowDebugCone && DebugSeatGridISM && SplinePoints2D.Num() > 2)
+	if (bShowDebugCone && SeatGridHISM && SplinePoints2D.Num() > 2)
 	{
-		DebugSeatGridISM->SetVisibility(true);
+		SeatGridHISM->SetVisibility(true);
 
 		// copy the rotaion of cone0
 		const FRotator ConeRotation = LocalForwardDirection.Rotation() + FRotator(-90.0f, 0.0f, 0.0f);
@@ -222,6 +222,18 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
 		const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
 
+		//Calculate Z offset
+		const int32 RowNum = (MaxRow - MinRow) + 1;
+		const float TotalHeight = SplineBounds.Max.Z;
+		if (RowNum > 1)
+		{
+			RowHeightOffset = TotalHeight / (RowNum - 1);
+		}
+		else
+		{
+			RowHeightOffset = 0.0f;
+		}
+
 		// Debug 4x5
 		//for (int32 Row = 0; Row < 4; ++Row)
 		for (int32 Row = MinRow; Row <= MaxRow; ++Row)
@@ -229,7 +241,7 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 			YIntersections.Reset(); //clear previous row
 			
 			const float ScanlineX = Row * RowSpacing;
-			const float Z_Height = Row * RowHeightOffset;
+			const float Z_Height = (Row - MinRow) * RowHeightOffset;
 			FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
 
 			if (YIntersections.Num() < 2)
@@ -261,14 +273,11 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 		}
 
 		// TArray to fill ISM
-		for (const FTransform& Transform : GeneratedTransforms)
-		{
-			DebugSeatGridISM->AddInstance(Transform);
-		}
+		SeatGridHISM->AddInstances(GeneratedTransforms, false);
 	}
-	else if (DebugSeatGridISM)
+	else if (SeatGridHISM)
 	{
-		DebugSeatGridISM->SetVisibility(false);
+		SeatGridHISM->SetVisibility(false);
 	}
 }
 
