@@ -5,23 +5,30 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "ASeatSpawnerBase.generated.h"
 
-UCLASS()
+class AAGlobalSeatManager;
+
+UCLASS(meta = (PrioritizeCategories = "_Parm_"))
 class STADIUM56_API AASeatSpawnerBase : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AASeatSpawnerBase();
+	AASeatSpawnerBase(); 
 	
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void Destroyed() override;
+	FVector GetLocalForwardDirection() const { return LocalForwardDirection; }
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	// spawner manager
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "_Parm_|Manager", meta = (DisplayPriority = "-1"))
+	AAGlobalSeatManager* SeatManager;
 
 	// Spline¡£editable in child bp
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Spline")
@@ -44,30 +51,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, Category = "_Parm_|Layout", meta = (ClampMin = "0.0"))
 	float RowHeightOffset;
 
-	UPROPERTY(VisibleAnywhere, Category = "_Parm_|Seat")
-	UHierarchicalInstancedStaticMeshComponent* SeatGridHISM; 
-	
-	UPROPERTY(EditDefaultsOnly, Category = "_Parm_|Seat")
-	UStaticMesh* SeatMesh;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Seat")
-	FRotator SeatRotationOffset;
-
-	// debug cone
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Debug")
-	UStaticMeshComponent* DebugCone;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
-	bool bUseDebugMesh;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
-	FRotator ConeRotationOffset;
 
 	// lock 0 and clamp all pts' z>0
 	void UpdateAndValidateSpline();
-
-	// set up seat vs cone
-	void UpdateHISMVisuals();
 
 	// scan row intersection algorithm to calculate seat transforms
 	TArray<FTransform> GenerateTransforms();

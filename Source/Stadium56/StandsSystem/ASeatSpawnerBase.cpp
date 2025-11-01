@@ -2,8 +2,7 @@
 
 
 #include "StandsSystem/ASeatSpawnerBase.h"
-#include "UObject/ConstructorHelpers.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "StandsSystem/AGlobalSeatManager.h"
 
 // Deprecated
 /**
@@ -67,35 +66,9 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	RootComponent = SeatSpline;
 	LocalForwardDirection = - FVector::ForwardVector; // (-1, 0, 0)
 	
-	// debug cone
-	DebugCone = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DebugCone"));
-	DebugCone->SetupAttachment(RootComponent);
-	DebugCone->bHiddenInGame = true; // Debug
-	DebugCone->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	DebugCone->SetVisibility(false);
-
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> ConeMeshAsset(TEXT("/Engine/BasicShapes/Cone.Cone"));
-	if (ConeMeshAsset.Succeeded())
-	{
-		DebugCone->SetStaticMesh(ConeMeshAsset.Object);
-	}
-	
-	bUseDebugMesh = false;
-
 	// initialize  offsets
 	ColumnSpacing = 100.0f;
 	RowSpacing = 150.0f;
-
-	// initialize rotations
-	SeatRotationOffset = FRotator::ZeroRotator;
-	ConeRotationOffset = FRotator(-90.0f, 0.0f, 0.0f);
-
-	// Debug cones ISM
-	SeatGridHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("SeatGridHISM"));
-	SeatGridHISM->SetupAttachment(RootComponent);
-	SeatGridHISM->bHiddenInGame = true;
-	SeatGridHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SeatGridHISM->SetVisibility(false);
 
 
 	// default spline points
@@ -127,30 +100,16 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 	// 1. update splines data
 	UpdateAndValidateSpline();
 
-	// 2. setup HISM
-	UpdateHISMVisuals();
-
 	// 3. math out all transforms -- the scan row intersection algorithm
 	const TArray<FTransform> GeneratedTransforms = GenerateTransforms();
 
-	// 4. transforms to HISM
-	if (SeatGridHISM)
+	if (!SeatManager)
 	{
-		// clean all old instances
-		SeatGridHISM->ClearInstances(); 
-		
-		const bool bHasValidMesh = (SeatGridHISM->GetStaticMesh() != nullptr); 
-		
-		if (bHasValidMesh && GeneratedTransforms.Num() > 0)
-		{
-			SeatGridHISM->SetVisibility(true);
-			SeatGridHISM->AddInstances(GeneratedTransforms, false);
-		}
-		else
-		{
-			SeatGridHISM->SetVisibility(false);
-		}
+		return;
 	}
+
+	// 5. transforms to Manager
+	SeatManager->RegisterSeatChunk(this, GeneratedTransforms);
 }
 
 void AASeatSpawnerBase::UpdateAndValidateSpline()
@@ -188,51 +147,6 @@ void AASeatSpawnerBase::UpdateAndValidateSpline()
 	}
 }
 
-void AASeatSpawnerBase::UpdateHISMVisuals()
-{
-	// Deprecated
-	//// show debug cone
-	//if (bUseDebugMesh && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
-	//{
-	//	DebugCone->SetVisibility(true);
-
-	//	// cone to pt0
-	//	FVector Point0Location = SeatSpline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local);
-	//	DebugCone->SetRelativeLocation(Point0Location);
-
-	//	// to forward direction
-	//	FRotator TargetDirectionRotator = LocalForwardDirection.Rotation();
-	//	FRotator MeshOffsetRotator = FRotator(-90.0f, 00.0f, 0.0f);
-
-	//	DebugCone->SetRelativeRotation(TargetDirectionRotator + MeshOffsetRotator);
-	//}
-	//else
-	//{
-	//	DebugCone->SetVisibility(false);
-	//}
-
-	UStaticMesh* TargetMesh = nullptr;
-
-	if (bUseDebugMesh)
-	{
-		if (DebugCone)
-		{
-			TargetMesh = DebugCone->GetStaticMesh();
-		}
-	}
-	else
-	{
-		TargetMesh = SeatMesh;
-	}
-
-	if (SeatGridHISM)
-	{
-		if (TargetMesh != SeatGridHISM->GetStaticMesh())
-		{
-			SeatGridHISM->SetStaticMesh(TargetMesh);
-		}
-	}
-}
 
 TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
 {
@@ -261,8 +175,6 @@ TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
 
 
 	const FRotator BaseRotation = LocalForwardDirection.Rotation();
-	const FRotator ConeRotation = BaseRotation + ConeRotationOffset;
-	const FRotator SeatRotation = BaseRotation + SeatRotationOffset;
 
 	// save the intersections of a row and the spline
 	TArray<float> YIntersections;
@@ -314,13 +226,22 @@ TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
 				const float SeatY = Col * ColumnSpacing;
 
 				const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
-				const FTransform InstanceTransform(bUseDebugMesh ? ConeRotation : SeatRotation, FinalPosition);
+				const FTransform InstanceTransform(BaseRotation, FinalPosition);
 				GeneratedTransforms.Add(InstanceTransform);
 			}
 		}
 	}
 
 	return GeneratedTransforms;
+}
+
+void AASeatSpawnerBase::Destroyed()
+{
+	if (SeatManager)
+	{
+		SeatManager->UnregisterSeatChunk(this);
+	}
+	Super::Destroyed();
 }
 
 // Called when the game starts or when spawned
