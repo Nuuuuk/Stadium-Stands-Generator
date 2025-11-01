@@ -44,15 +44,24 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, Category = "_Parm_|Layout", meta = (ClampMin = "0.0"))
 	float RowHeightOffset;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Debug")
-	UHierarchicalInstancedStaticMeshComponent* SeatGridHISM;
+	UPROPERTY(VisibleAnywhere, Category = "_Parm_|Seat")
+	UHierarchicalInstancedStaticMeshComponent* SeatGridHISM; 
+	
+	UPROPERTY(EditDefaultsOnly, Category = "_Parm_|Seat")
+	UStaticMesh* SeatMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Seat")
+	FRotator SeatRotationOffset;
 
 	// debug cone
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Debug")
 	UStaticMeshComponent* DebugCone;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
-	bool bShowDebugCone;
+	bool bUseDebugMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
+	FRotator ConeRotationOffset;
 
 public:	
 	// Called every frame

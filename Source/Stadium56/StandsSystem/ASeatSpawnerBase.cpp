@@ -80,12 +80,16 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 		DebugCone->SetStaticMesh(ConeMeshAsset.Object);
 	}
 	
-	bShowDebugCone = true;
-	
+	bUseDebugMesh = false;
+
 	// initialize  offsets
 	ColumnSpacing = 100.0f;
 	RowSpacing = 150.0f;
-	RowHeightOffset = 50.0f;
+	RowHeightOffset = 50.0f; 
+
+	// initialize rotations
+	SeatRotationOffset = FRotator::ZeroRotator;
+	ConeRotationOffset = FRotator(-90.0f, 0.0f, 0.0f);
 
 	// Debug cones ISM
 	SeatGridHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("SeatGridHISM"));
@@ -94,10 +98,6 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	SeatGridHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SeatGridHISM->SetVisibility(false);
 
-	if (ConeMeshAsset.Succeeded())
-	{
-		SeatGridHISM->SetStaticMesh(ConeMeshAsset.Object);
-	}
 
 	// default spline points
 	if (WITH_EDITOR)
@@ -159,7 +159,7 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 
 	// Deprecated
 	//// show debug cone
-	//if (bShowDebugCone && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
+	//if (bUseDebugMesh && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
 	//{
 	//	DebugCone->SetVisibility(true);
 
@@ -178,15 +178,34 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 	//	DebugCone->SetVisibility(false);
 	//}
 
+	UStaticMesh* TargetMesh = nullptr;
 
+	if (bUseDebugMesh) 
+	{
+		if (DebugCone)
+		{
+			TargetMesh = DebugCone->GetStaticMesh(); 
+		}
+	}
+	else
+	{
+		TargetMesh = SeatMesh;
+	}
+
+
+	if (SeatGridHISM)
+	{
+		if (TargetMesh != SeatGridHISM->GetStaticMesh())
+		{
+			SeatGridHISM->SetStaticMesh(TargetMesh);
+		}
+	}
 
 	// clean all old instances
 	if (SeatGridHISM)
 	{
 		SeatGridHISM->ClearInstances();
 	}
-
-
 
 	// 2D spline points
 	TArray<FVector2D> SplinePoints2D; 
@@ -208,72 +227,77 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 	// save the transforms
 	TArray<FTransform> GeneratedTransforms;
 
-	if (bShowDebugCone && SeatGridHISM && SplinePoints2D.Num() > 2)
+	if (SeatGridHISM && SplinePoints2D.Num() > 2)
 	{
-		SeatGridHISM->SetVisibility(true);
+		const bool bHasValidMesh = (SeatGridHISM->GetStaticMesh() != nullptr);
+		SeatGridHISM->SetVisibility(bHasValidMesh);
 
-		// copy the rotaion of cone0
-		const FRotator ConeRotation = LocalForwardDirection.Rotation() + FRotator(-90.0f, 0.0f, 0.0f);
-
-		// save the intersections of a row and the spline
-		TArray<float> YIntersections; 
-
-		// AABB to get row index range
-		const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
-		const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
-
-		//Calculate Z offset
-		const int32 RowNum = (MaxRow - MinRow) + 1;
-		const float TotalHeight = SplineBounds.Max.Z;
-		if (RowNum > 1)
+		if (bHasValidMesh)
 		{
-			RowHeightOffset = TotalHeight / (RowNum - 1);
-		}
-		else
-		{
-			RowHeightOffset = 0.0f;
-		}
+			const FRotator BaseRotation = LocalForwardDirection.Rotation();
+			const FRotator ConeRotation = BaseRotation + ConeRotationOffset;
+			const FRotator SeatRotation = BaseRotation + SeatRotationOffset;
 
-		// Debug 4x5
-		//for (int32 Row = 0; Row < 4; ++Row)
-		for (int32 Row = MinRow; Row <= MaxRow; ++Row)
-		{
-			YIntersections.Reset(); //clear previous row
-			
-			const float ScanlineX = Row * RowSpacing;
-			const float Z_Height = (Row - MinRow) * RowHeightOffset;
-			FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
+			// save the intersections of a row and the spline
+			TArray<float> YIntersections;
 
-			if (YIntersections.Num() < 2)
+			// AABB to get row index range
+			const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
+			const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
+
+			//Calculate Z offset
+			const int32 RowNum = (MaxRow - MinRow) + 1;
+			const float TotalHeight = SplineBounds.Max.Z;
+			if (RowNum > 1)
 			{
-				continue; // no intersections
+				RowHeightOffset = TotalHeight / (RowNum - 1);
+			}
+			else
+			{
+				RowHeightOffset = 0.0f;
 			}
 
-			YIntersections.Sort();
-
-			// fill inside. odd-even rule
-			for (int32 i = 0; i < YIntersections.Num(); i += 2)
+			// Debug 4x5
+			//for (int32 Row = 0; Row < 4; ++Row)
+			for (int32 Row = MinRow; Row <= MaxRow; ++Row)
 			{
-				const float Y_Enter = YIntersections[i];
-				const float Y_Exit = YIntersections[i + 1];
+				YIntersections.Reset(); //clear previous row
 
-				// AABB to get column index range
-				const int32 MinCol = FMath::CeilToInt(Y_Enter / ColumnSpacing);
-				const int32 MaxCol = FMath::FloorToInt(Y_Exit / ColumnSpacing);
-				//for (int32 Col = 0; Col < 5; ++Col)
-				for (int32 Col = MinCol; Col <= MaxCol; ++Col)
+				const float ScanlineX = Row * RowSpacing;
+				const float Z_Height = (Row - MinRow) * RowHeightOffset;
+				FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
+
+				if (YIntersections.Num() < 2)
 				{
-					const float SeatY = Col * ColumnSpacing;
+					continue; // no intersections
+				}
 
-					const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
-					const FTransform InstanceTransform(ConeRotation, FinalPosition);
-					GeneratedTransforms.Add(InstanceTransform);
+				YIntersections.Sort();
+
+				// fill inside. odd-even rule
+				for (int32 i = 0; i < YIntersections.Num(); i += 2)
+				{
+					const float Y_Enter = YIntersections[i];
+					const float Y_Exit = YIntersections[i + 1];
+
+					// AABB to get column index range
+					const int32 MinCol = FMath::CeilToInt(Y_Enter / ColumnSpacing);
+					const int32 MaxCol = FMath::FloorToInt(Y_Exit / ColumnSpacing);
+					//for (int32 Col = 0; Col < 5; ++Col)
+					for (int32 Col = MinCol; Col <= MaxCol; ++Col)
+					{
+						const float SeatY = Col * ColumnSpacing;
+
+						const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
+						const FTransform InstanceTransform(bUseDebugMesh ? ConeRotation : SeatRotation, FinalPosition);
+						GeneratedTransforms.Add(InstanceTransform);
+					}
 				}
 			}
-		}
 
-		// TArray to fill ISM
-		SeatGridHISM->AddInstances(GeneratedTransforms, false);
+			// TArray to fill ISM
+			SeatGridHISM->AddInstances(GeneratedTransforms, false);
+		}
 	}
 	else if (SeatGridHISM)
 	{
