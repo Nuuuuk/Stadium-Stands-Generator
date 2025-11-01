@@ -63,6 +63,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
 	FRotator ConeRotationOffset;
 
+	// lock 0 and clamp all pts' z>0
+	void UpdateAndValidateSpline();
+
+	// set up seat vs cone
+	void UpdateHISMVisuals();
+
+	// scan row intersection algorithm to calculate seat transforms
+	TArray<FTransform> GenerateTransforms();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

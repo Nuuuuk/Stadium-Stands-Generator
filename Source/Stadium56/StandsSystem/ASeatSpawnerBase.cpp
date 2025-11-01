@@ -85,7 +85,6 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	// initialize  offsets
 	ColumnSpacing = 100.0f;
 	RowSpacing = 150.0f;
-	RowHeightOffset = 50.0f; 
 
 	// initialize rotations
 	SeatRotationOffset = FRotator::ZeroRotator;
@@ -125,6 +124,37 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 	
+	// 1. update splines data
+	UpdateAndValidateSpline();
+
+	// 2. setup HISM
+	UpdateHISMVisuals();
+
+	// 3. math out all transforms -- the scan row intersection algorithm
+	const TArray<FTransform> GeneratedTransforms = GenerateTransforms();
+
+	// 4. transforms to HISM
+	if (SeatGridHISM)
+	{
+		// clean all old instances
+		SeatGridHISM->ClearInstances(); 
+		
+		const bool bHasValidMesh = (SeatGridHISM->GetStaticMesh() != nullptr); 
+		
+		if (bHasValidMesh && GeneratedTransforms.Num() > 0)
+		{
+			SeatGridHISM->SetVisibility(true);
+			SeatGridHISM->AddInstances(GeneratedTransforms, false);
+		}
+		else
+		{
+			SeatGridHISM->SetVisibility(false);
+		}
+	}
+}
+
+void AASeatSpawnerBase::UpdateAndValidateSpline()
+{
 	// lock point 0
 	if (SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
 	{
@@ -156,7 +186,10 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 			SeatSpline->UpdateSpline();
 		}
 	}
+}
 
+void AASeatSpawnerBase::UpdateHISMVisuals()
+{
 	// Deprecated
 	//// show debug cone
 	//if (bUseDebugMesh && SeatSpline && SeatSpline->GetNumberOfSplinePoints() > 0)
@@ -180,18 +213,17 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 
 	UStaticMesh* TargetMesh = nullptr;
 
-	if (bUseDebugMesh) 
+	if (bUseDebugMesh)
 	{
 		if (DebugCone)
 		{
-			TargetMesh = DebugCone->GetStaticMesh(); 
+			TargetMesh = DebugCone->GetStaticMesh();
 		}
 	}
 	else
 	{
 		TargetMesh = SeatMesh;
 	}
-
 
 	if (SeatGridHISM)
 	{
@@ -200,109 +232,96 @@ void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
 			SeatGridHISM->SetStaticMesh(TargetMesh);
 		}
 	}
+}
 
-	// clean all old instances
-	if (SeatGridHISM)
-	{
-		SeatGridHISM->ClearInstances();
-	}
-
-	// 2D spline points
-	TArray<FVector2D> SplinePoints2D; 
-	// spline bounds 3d
-	FBox SplineBounds(ForceInit);
-
-	if (SeatSpline)
-	{
-		const int32 NumSplinePoints = SeatSpline->GetNumberOfSplinePoints(); //ordered
-		for (int32 i = 0; i < NumSplinePoints; ++i)
-		{
-			const FVector Location3D = SeatSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
-			SplinePoints2D.Add(FVector2D(Location3D.X, Location3D.Y));
-			// add pt to bounds
-			SplineBounds += Location3D;
-		}
-	}
-
+TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
+{
 	// save the transforms
 	TArray<FTransform> GeneratedTransforms;
 
-	if (SeatGridHISM && SplinePoints2D.Num() > 2)
+	// 2D spline points
+	TArray<FVector2D> SplinePoints2D;
+	// spline bounds 3d
+	FBox SplineBounds(ForceInit);
+
+	if (!SeatSpline || SeatSpline->GetNumberOfSplinePoints() <= 2)
 	{
-		const bool bHasValidMesh = (SeatGridHISM->GetStaticMesh() != nullptr);
-		SeatGridHISM->SetVisibility(bHasValidMesh);
+		return GeneratedTransforms; // return empty
+	}
 
-		if (bHasValidMesh)
+
+	const int32 NumSplinePoints = SeatSpline->GetNumberOfSplinePoints(); //ordered
+	for (int32 i = 0; i < NumSplinePoints; ++i)
+	{
+		const FVector Location3D = SeatSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
+		SplinePoints2D.Add(FVector2D(Location3D.X, Location3D.Y));
+		// add pt to bounds
+		SplineBounds += Location3D;
+	}
+
+
+	const FRotator BaseRotation = LocalForwardDirection.Rotation();
+	const FRotator ConeRotation = BaseRotation + ConeRotationOffset;
+	const FRotator SeatRotation = BaseRotation + SeatRotationOffset;
+
+	// save the intersections of a row and the spline
+	TArray<float> YIntersections;
+
+	// AABB to get row index range
+	const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
+	const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
+
+	//Calculate Z offset
+	const int32 RowNum = (MaxRow - MinRow) + 1;
+	const float TotalHeight = SplineBounds.Max.Z;
+	if (RowNum > 1)
+	{
+		RowHeightOffset = TotalHeight / (RowNum - 1);
+	}
+	else
+	{
+		RowHeightOffset = 0.0f;
+	}
+
+	// Debug 4x5
+	//for (int32 Row = 0; Row < 4; ++Row)
+	for (int32 Row = MinRow; Row <= MaxRow; ++Row)
+	{
+		YIntersections.Reset(); //clear previous row
+
+		const float ScanlineX = Row * RowSpacing;
+		const float Z_Height = (Row - MinRow) * RowHeightOffset;
+		FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
+
+		if (YIntersections.Num() < 2)
 		{
-			const FRotator BaseRotation = LocalForwardDirection.Rotation();
-			const FRotator ConeRotation = BaseRotation + ConeRotationOffset;
-			const FRotator SeatRotation = BaseRotation + SeatRotationOffset;
+			continue; // no intersections
+		}
 
-			// save the intersections of a row and the spline
-			TArray<float> YIntersections;
+		YIntersections.Sort();
 
-			// AABB to get row index range
-			const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
-			const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
+		// fill inside. odd-even rule
+		for (int32 i = 0; i < YIntersections.Num(); i += 2)
+		{
+			const float Y_Enter = YIntersections[i];
+			const float Y_Exit = YIntersections[i + 1];
 
-			//Calculate Z offset
-			const int32 RowNum = (MaxRow - MinRow) + 1;
-			const float TotalHeight = SplineBounds.Max.Z;
-			if (RowNum > 1)
+			// AABB to get column index range
+			const int32 MinCol = FMath::CeilToInt(Y_Enter / ColumnSpacing);
+			const int32 MaxCol = FMath::FloorToInt(Y_Exit / ColumnSpacing);
+			//for (int32 Col = 0; Col < 5; ++Col)
+			for (int32 Col = MinCol; Col <= MaxCol; ++Col)
 			{
-				RowHeightOffset = TotalHeight / (RowNum - 1);
+				const float SeatY = Col * ColumnSpacing;
+
+				const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
+				const FTransform InstanceTransform(bUseDebugMesh ? ConeRotation : SeatRotation, FinalPosition);
+				GeneratedTransforms.Add(InstanceTransform);
 			}
-			else
-			{
-				RowHeightOffset = 0.0f;
-			}
-
-			// Debug 4x5
-			//for (int32 Row = 0; Row < 4; ++Row)
-			for (int32 Row = MinRow; Row <= MaxRow; ++Row)
-			{
-				YIntersections.Reset(); //clear previous row
-
-				const float ScanlineX = Row * RowSpacing;
-				const float Z_Height = (Row - MinRow) * RowHeightOffset;
-				FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
-
-				if (YIntersections.Num() < 2)
-				{
-					continue; // no intersections
-				}
-
-				YIntersections.Sort();
-
-				// fill inside. odd-even rule
-				for (int32 i = 0; i < YIntersections.Num(); i += 2)
-				{
-					const float Y_Enter = YIntersections[i];
-					const float Y_Exit = YIntersections[i + 1];
-
-					// AABB to get column index range
-					const int32 MinCol = FMath::CeilToInt(Y_Enter / ColumnSpacing);
-					const int32 MaxCol = FMath::FloorToInt(Y_Exit / ColumnSpacing);
-					//for (int32 Col = 0; Col < 5; ++Col)
-					for (int32 Col = MinCol; Col <= MaxCol; ++Col)
-					{
-						const float SeatY = Col * ColumnSpacing;
-
-						const FVector FinalPosition(ScanlineX, SeatY, Z_Height);
-						const FTransform InstanceTransform(bUseDebugMesh ? ConeRotation : SeatRotation, FinalPosition);
-						GeneratedTransforms.Add(InstanceTransform);
-					}
-				}
-			}
-
-			// TArray to fill ISM
-			SeatGridHISM->AddInstances(GeneratedTransforms, false);
 		}
 	}
-	else if (SeatGridHISM)
-	{
-		SeatGridHISM->SetVisibility(false);
-	}
+
+	return GeneratedTransforms;
 }
 
 // Called when the game starts or when spawned
