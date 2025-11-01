@@ -8,7 +8,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "AGlobalSeatManager.generated.h"
 
-UCLASS(meta = (PrioritizeCategories = "_Parm_"))
+UCLASS(meta = (PrioritizeCategories = "Parm"))
 class STADIUM56_API AAGlobalSeatManager : public AActor
 {
 	GENERATED_BODY()
@@ -17,6 +17,7 @@ public:
 	// Sets default values for this actor's properties
 	AAGlobalSeatManager();
 
+	virtual void OnConstruction(const FTransform& Transform) override;
 	// called by ASeatSpawner to register Transforms
 	void RegisterSeatChunk(AActor* Spawner, const TArray<FTransform>& RawTransforms);
 
@@ -26,27 +27,27 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override; 
-	
+		
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* DefaultSceneRoot;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Seat")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm|Seat")
 	UHierarchicalInstancedStaticMeshComponent* SeatGridHISM;
 
-	UPROPERTY(EditDefaultsOnly, Category = "_Parm_|Seat")
+	UPROPERTY(EditDefaultsOnly, Category = "Parm|Seat")
 	UStaticMesh* SeatMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Seat")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm|Seat")
 	FRotator SeatRotationOffset;
 
 	// debug cone
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Debug")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm|Debug")
 	UStaticMeshComponent* DebugCone;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm|Debug")
 	bool bUseDebugMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "_Parm_|Debug")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm|Debug")
 	FRotator ConeRotationOffset;
 
 private:

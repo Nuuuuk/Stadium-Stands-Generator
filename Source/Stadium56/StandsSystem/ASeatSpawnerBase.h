@@ -9,7 +9,7 @@
 
 class AAGlobalSeatManager;
 
-UCLASS(meta = (PrioritizeCategories = "_Parm_"))
+UCLASS(meta = (PrioritizeCategories = "Parm"))
 class STADIUM56_API AASeatSpawnerBase : public AActor
 {
 	GENERATED_BODY()
@@ -27,28 +27,28 @@ protected:
 	virtual void BeginPlay() override;
 
 	// spawner manager
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "_Parm_|Manager", meta = (DisplayPriority = "-1"))
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Parm|Manager", meta = (DisplayPriority = "-1"))
 	AAGlobalSeatManager* SeatManager;
 
 	// Spline¡£editable in child bp
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_|Spline")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm|Spline")
 	USplineComponent* SeatSpline;
 
 	// forward direction of seats (local)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_Parm_")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm")
 	FVector LocalForwardDirection;
 
 
 	// collums
-	UPROPERTY(EditAnywhere, Category = "_Parm_|Layout", meta = (ClampMin = "1.0"))
+	UPROPERTY(EditAnywhere, Category = "Parm|Layout", meta = (ClampMin = "1.0"))
 	float ColumnSpacing;
 
 	// rows
-	UPROPERTY(EditAnywhere, Category = "_Parm_|Layout", meta = (ClampMin = "1.0"))
+	UPROPERTY(EditAnywhere, Category = "Parm|Layout", meta = (ClampMin = "1.0"))
 	float RowSpacing;
 
 	// row's z offset
-	UPROPERTY(VisibleInstanceOnly, Category = "_Parm_|Layout", meta = (ClampMin = "0.0"))
+	UPROPERTY(VisibleInstanceOnly, Category = "Parm|Layout", meta = (ClampMin = "0.0"))
 	float RowHeightOffset;
 
 
