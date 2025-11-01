@@ -267,12 +267,11 @@ TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
 	// save the intersections of a row and the spline
 	TArray<float> YIntersections;
 
-	// AABB to get row index range
-	const int32 MinRow = FMath::FloorToInt(SplineBounds.Min.X / RowSpacing);
-	const int32 MaxRow = FMath::CeilToInt(SplineBounds.Max.X / RowSpacing);
+	//// AABB to get row index range
+	const int32 MaxRow = FMath::FloorToInt(SplineBounds.GetSize().X / RowSpacing);
 
 	//Calculate Z offset
-	const int32 RowNum = (MaxRow - MinRow) + 1;
+	const int32 RowNum = MaxRow + 1;
 	const float TotalHeight = SplineBounds.Max.Z;
 	if (RowNum > 1)
 	{
@@ -285,12 +284,12 @@ TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
 
 	// Debug 4x5
 	//for (int32 Row = 0; Row < 4; ++Row)
-	for (int32 Row = MinRow; Row <= MaxRow; ++Row)
+	for (int32 Row = 0; Row <= MaxRow; ++Row)
 	{
 		YIntersections.Reset(); //clear previous row
 
 		const float ScanlineX = Row * RowSpacing;
-		const float Z_Height = (Row - MinRow) * RowHeightOffset;
+		const float Z_Height = Row * RowHeightOffset;
 		FindVerticalScanlineIntersections(ScanlineX, SplinePoints2D, YIntersections);
 
 		if (YIntersections.Num() < 2)
