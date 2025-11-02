@@ -20,17 +20,18 @@ AAGlobalCrowdManager::AAGlobalCrowdManager()
 	HISMsRoot = CreateDefaultSubobject<USceneComponent>(TEXT("HISMsRoot"));
 	HISMsRoot->SetupAttachment(RootComponent);
 
-	bBakeCrowd = false;
+	//bBakeCrowd = false;
+	bHasInitialBaked = false;
 }
 
 void AAGlobalCrowdManager::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	if (bBakeCrowd)
+	if (SeatManager && !bHasInitialBaked)
 	{
 		BakeCrowd();
-		bBakeCrowd = false; //invert the button
+		bHasInitialBaked = true;
 	}
 }
 

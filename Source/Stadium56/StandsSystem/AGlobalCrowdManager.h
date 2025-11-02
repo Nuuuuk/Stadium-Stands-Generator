@@ -50,12 +50,12 @@ protected:
 	USceneComponent* HISMsRoot;
 
 	//hook the seat manager in bp
-	UPROPERTY(EditAnywhere, Category = "Parm")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm")
 	AAGlobalSeatManager* SeatManager;
 
-	// a fake button. will auto uncheck
-	UPROPERTY(EditAnywhere, Category = "Parm|Bake")
-	bool bBakeCrowd;
+	//// a fake button. will auto uncheck
+	//UPROPERTY(EditAnywhere, Category = "Parm|Bake")
+	//bool bBakeCrowd;
 
 	// offset to each character
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm|Assets")
@@ -69,8 +69,12 @@ protected:
 	TArray<UHierarchicalInstancedStaticMeshComponent*> CrowdHISMs;
 
 private:
-	// search for seats and volumes and then HISM
+	UFUNCTION(BlueprintCallable, Category = "Parm", meta = (CallInEditor = "true"))
 	void BakeCrowd();
+
+	// bake when spawned first timne
+	UPROPERTY()
+	bool bHasInitialBaked;
 
 	// clean HISMs
 	void ClearCrowd();
