@@ -57,6 +57,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Parm|Bake")
 	bool bBakeCrowd;
 
+	// offset to each character
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm|Assets")
+	FTransform OffsetTransform;
+
 	// sm * mi
 	UPROPERTY(EditDefaultsOnly, Category = "Parm|Assets")
 	TArray<FCharacterVariant> CrowdCharacterVariants;

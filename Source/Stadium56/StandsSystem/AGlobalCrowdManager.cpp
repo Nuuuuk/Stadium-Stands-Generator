@@ -182,7 +182,7 @@ void AAGlobalCrowdManager::PopulateHISMs(const TArray<FTransform>& FilteredSeats
 
 		const float RandomDataForThisInstance = FMath::FRand();
 
-		HismTransforms[HismIndex].Add(WorldSeatTransform);
+		HismTransforms[HismIndex].Add(OffsetTransform * WorldSeatTransform);
 		HismCustomData[HismIndex].Add(RandomDataForThisInstance);
 	}
 
@@ -191,7 +191,7 @@ void AAGlobalCrowdManager::PopulateHISMs(const TArray<FTransform>& FilteredSeats
 		if (CrowdHISMs[i] && HismTransforms[i].Num() > 0)
 		{
 			// add instances in batches
-			CrowdHISMs[i]->AddInstances(HismTransforms[i], false /* bWorldSpace */);
+			CrowdHISMs[i]->AddInstances(HismTransforms[i], true);
 
 			// add custom data one by one
 			const TArray<float>& CustomDataForThisHISM = HismCustomData[i];
