@@ -2,13 +2,43 @@
 
 
 #include "StandsSystem/ACrowdVolume.h"
+#include "Components/BoxComponent.h"
+#include "Components/SceneComponent.h"
 
 // Sets default values
 AACrowdVolume::AACrowdVolume()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+
+	QueryBox = CreateDefaultSubobject<UBoxComponent>(TEXT("QueryBox"));
+	RootComponent = QueryBox;
+	QueryBox->SetBoxExtent(FVector(1000.f, 800.f, 500.f)); // д╛хо 10m x 8m x 5m
+
+	CrowdDensity = 0.8f; // defaykt
+	RandomSeed = -487486592;
+}
+
+void AACrowdVolume::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	// random seed on first spawn
+	if (RandomSeed == -487486592)
+	{
+		RandomSeed = FMath::RandRange(0, 999999);
+	}
+}
+
+FBox AACrowdVolume::GetQueryBox() const
+{
+	if (QueryBox)
+	{
+		// world bound
+		return QueryBox->CalcBounds(GetActorTransform()).GetBox();
+	}
+	return FBox(ForceInit);
 }
 
 // Called when the game starts or when spawned
