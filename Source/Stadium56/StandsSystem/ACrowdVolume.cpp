@@ -4,6 +4,8 @@
 #include "StandsSystem/ACrowdVolume.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
+#include "StandsSystem/AGlobalCrowdManager.h"
+#include "EngineUtils.h"
 
 // Sets default values
 AACrowdVolume::AACrowdVolume()
@@ -39,6 +41,17 @@ FBox AACrowdVolume::GetQueryBox() const
 		return QueryBox->CalcBounds(GetActorTransform()).GetBox();
 	}
 	return FBox(ForceInit);
+}
+
+void AACrowdVolume::PostEditMove(bool bFinished)
+{
+	Super::PostEditMove(bFinished);
+
+	// bFinished - > move eended
+	if (bFinished && CrowdManager)
+	{
+		CrowdManager->BakeCrowd();
+	}
 }
 
 // Called when the game starts or when spawned

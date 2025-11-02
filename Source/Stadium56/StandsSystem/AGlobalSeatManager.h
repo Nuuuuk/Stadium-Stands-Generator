@@ -24,6 +24,9 @@ public:
 	// remove from manager when destroyed
 	void UnregisterSeatChunk(AActor* Spawner);
 
+	// all called seat transforms
+	TArray<FTransform> AllTransforms;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override; 
@@ -61,7 +64,7 @@ private:
 	void UpdateHISMVisuals();
 
 	// conbine and apply BP global transforms
-	void CombineTransforms(TArray<FTransform>& AllTransforms);
+	void CombineTransforms(TArray<FTransform>& OutTransforms);
 
 public:	
 	// Called every frame

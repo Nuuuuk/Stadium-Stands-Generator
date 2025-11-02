@@ -106,8 +106,8 @@ void AAGlobalSeatManager::RebuildHISMs()
 		return;
 	}
 
-	TArray<FTransform> AllTransforms;
 	// 4. combine all Transforms
+	AllTransforms.Empty();
 	CombineTransforms(AllTransforms);
 
 	// 5. add to HISM
@@ -122,7 +122,7 @@ void AAGlobalSeatManager::RebuildHISMs()
 	}
 }
 
-void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& AllTransforms)
+void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& OutTransforms)
 {
 
 	const FVector IndividualScale = bUseDebugMesh ? FVector(0.5f) : FVector(1.0f); 
@@ -142,7 +142,7 @@ void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& AllTransforms)
 					RawTransform.GetLocation(),
 					IndividualScale
 				);
-				AllTransforms.Add(FinalLocalTransform * SpawnerWorldTransform);
+				OutTransforms.Add(FinalLocalTransform * SpawnerWorldTransform);
 			}
 		}
 	}
