@@ -39,6 +39,9 @@ public:
 	AAGlobalCrowdManager(); 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Parm", meta = (CallInEditor = "true"))
+	void BakeCrowd();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -69,9 +72,6 @@ protected:
 	TArray<UHierarchicalInstancedStaticMeshComponent*> CrowdHISMs;
 
 private:
-	UFUNCTION(BlueprintCallable, Category = "Parm", meta = (CallInEditor = "true"))
-	void BakeCrowd();
-
 	// bake when spawned first timne
 	UPROPERTY()
 	bool bHasInitialBaked;
