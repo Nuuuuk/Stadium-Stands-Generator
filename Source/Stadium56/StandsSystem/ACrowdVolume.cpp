@@ -3,7 +3,7 @@
 
 #include "StandsSystem/ACrowdVolume.h"
 #include "Components/BoxComponent.h"
-#include "Components/SceneComponent.h"
+#include "Components/BillboardComponent.h"
 
 // Sets default values
 AACrowdVolume::AACrowdVolume()
@@ -11,10 +11,12 @@ AACrowdVolume::AACrowdVolume()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	IconComponent = CreateDefaultSubobject<UBillboardComponent>(TEXT("Icon"));
+	RootComponent = IconComponent;
 
 	QueryBox = CreateDefaultSubobject<UBoxComponent>(TEXT("QueryBox"));
-	RootComponent = QueryBox;
-	QueryBox->SetBoxExtent(FVector(1000.f, 800.f, 500.f)); // д╛хо 10m x 8m x 5m
+	QueryBox->SetupAttachment(RootComponent);
+	QueryBox->SetBoxExtent(FVector(500.f, 400.f, 300.f)); // 5m x 4m x 3m
 
 	CrowdDensity = 0.8f; // defaykt
 	RandomSeed = -487486592;

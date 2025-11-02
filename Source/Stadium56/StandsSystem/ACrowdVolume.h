@@ -25,6 +25,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm")
+	UBillboardComponent* IconComponent;
+
 	// visualize box volume for querying crowd positions
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm")
 	UBoxComponent* QueryBox;
