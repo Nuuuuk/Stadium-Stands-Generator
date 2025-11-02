@@ -7,6 +7,8 @@
 #include "Components/BoxComponent.h"
 #include "ACrowdVolume.generated.h"
 
+class AAGlobalCrowdManager;
+
 UCLASS(meta = (PrioritizeCategories = "Parm"))
 class STADIUM56_API AACrowdVolume : public AActor
 {
@@ -17,6 +19,8 @@ public:
 	AACrowdVolume();
 
 	virtual void OnConstruction(const FTransform& Transform) override;
+	// tell manager bake after move.
+	virtual void PostEditMove(bool bFinished) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Parm")
 	FBox GetQueryBox() const;
@@ -25,9 +29,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// visualize box volume for querying crowd positions
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm")
+	// visualize box volume
 	UBoxComponent* QueryBox;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Parm|Manager")
+	AAGlobalCrowdManager* CrowdManager;
 
 public:	
 	// Called every frame
