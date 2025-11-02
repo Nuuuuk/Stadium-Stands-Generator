@@ -5,6 +5,7 @@
 #include "StandsSystem/AGlobalSeatManager.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/SceneComponent.h"
+#include "StandsSystem/ACrowdVolume.h"
 #include "EngineUtils.h"
 
 // Sets default values
@@ -15,6 +16,9 @@ AAGlobalCrowdManager::AAGlobalCrowdManager()
 
 	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
 	RootComponent = DefaultSceneRoot;
+
+	HISMsRoot = CreateDefaultSubobject<USceneComponent>(TEXT("HISMsRoot"));
+	HISMsRoot->SetupAttachment(RootComponent);
 
 	bBakeCrowd = false;
 }
@@ -66,9 +70,14 @@ void AAGlobalCrowdManager::SetupHISMComponents()
 		{
 			FName HismName = FName(*FString::Printf(TEXT("CrowdHISM_%d"), i));
 			UHierarchicalInstancedStaticMeshComponent* NewHISM = NewObject<UHierarchicalInstancedStaticMeshComponent>(this, HismName);
-			NewHISM->SetupAttachment(RootComponent);
+			NewHISM->SetupAttachment(HISMsRoot);
 			NewHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			NewHISM->RegisterComponent();
+
+			// enable custom data!!!!!!
+			NewHISM->NumCustomDataFloats = 1;
+
+
 			CrowdHISMs.Add(NewHISM);
 		}
 	}
@@ -147,23 +156,51 @@ TArray<FTransform> AAGlobalCrowdManager::GetFilteredSeatTransforms() const
 
 void AAGlobalCrowdManager::PopulateHISMs(const TArray<FTransform>& FilteredSeats)
 {
-	const int32 NumVariants = CrowdCharacterVariants.Num();
-	if (NumVariants == 0) return;
+	const int32 NumMeshes = CrowdCharacterVariants.Num(); 
+	// get zeroth's mat num
+	const int32 NumMats = CrowdCharacterVariants.Num() > 0 ? CrowdCharacterVariants[0].VATMats.Num() : 0;
+	const int32 TotalHISMs = CrowdHISMs.Num();
 
-	const int32 NumMatsPerVariant = 6;
-	const FTransform ManagerInverseWorldTransform = GetActorTransform().Inverse();
-	FRandomStream Stream;
+	// transform of each hism
+	TArray<TArray<FTransform>> HismTransforms;
+	HismTransforms.SetNum(TotalHISMs);
 
-	for (const FTransform& WorldTransform : FilteredSeats)
+	// custom data of each hism    -> for random time offset
+	TArray<TArray<float>> HismCustomData;
+	HismCustomData.SetNum(TotalHISMs);
+
+	// deprecated, invert in bp onconstruction
+	//const FTransform ManagerInverseWorldTransform = GetActorTransform().Inverse();
+
+
+	for (const FTransform& WorldSeatTransform : FilteredSeats)
 	{
-		const int32 VariantIndex = Stream.RandRange(0, NumVariants - 1);
-		const int32 MatIndex = Stream.RandRange(0, NumMatsPerVariant - 1);
+		// select a combination of mesh and mat
+		const int32 MeshIdx = FMath::RandRange(0, NumMeshes - 1);
+		const int32 MatIdx = FMath::RandRange(0, NumMats - 1);
+		const int32 HismIndex = (MeshIdx * NumMats) + MatIdx;
 
-		const int32 HISM_Index = (VariantIndex * NumMatsPerVariant) + MatIndex;
+		const float RandomDataForThisInstance = FMath::FRand();
 
-		if (CrowdHISMs.IsValidIndex(HISM_Index) && CrowdHISMs[HISM_Index])
+		HismTransforms[HismIndex].Add(WorldSeatTransform);
+		HismCustomData[HismIndex].Add(RandomDataForThisInstance);
+	}
+
+	for (int32 i = 0; i < TotalHISMs; ++i)
+	{
+		if (CrowdHISMs[i] && HismTransforms[i].Num() > 0)
 		{
-			CrowdHISMs[HISM_Index]->AddInstance(WorldTransform * ManagerInverseWorldTransform);
+			// add instances in batches
+			CrowdHISMs[i]->AddInstances(HismTransforms[i], false /* bWorldSpace */);
+
+			// add custom data one by one
+			const TArray<float>& CustomDataForThisHISM = HismCustomData[i];
+			const int32 NumInstancesInThisHISM = CustomDataForThisHISM.Num();
+			for (int32 j = 0; j < NumInstancesInThisHISM; ++j)
+			{
+				// custom index = 0
+				CrowdHISMs[i]->SetCustomDataValue(j, 0, CustomDataForThisHISM[j]);
+			}
 		}
 	}
 }

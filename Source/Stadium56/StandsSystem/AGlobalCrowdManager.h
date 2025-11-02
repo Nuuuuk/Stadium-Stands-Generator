@@ -43,8 +43,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* DefaultSceneRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	USceneComponent* HISMsRoot;
 
 	//hook the seat manager in bp
 	UPROPERTY(EditAnywhere, Category = "Parm")
