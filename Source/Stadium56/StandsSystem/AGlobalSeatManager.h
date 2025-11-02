@@ -64,7 +64,7 @@ private:
 	void UpdateHISMVisuals();
 
 	// conbine and apply BP global transforms
-	void CombineTransforms(TArray<FTransform>& AllTransforms);
+	void CombineTransforms(TArray<FTransform>& OutTransforms);
 
 public:	
 	// Called every frame
