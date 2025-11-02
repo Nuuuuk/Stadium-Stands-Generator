@@ -49,11 +49,24 @@ void AAGlobalCrowdManager::ClearCrowd()
 void AAGlobalCrowdManager::SetupHISMComponents()
 {
 	const int32 NumVariants = CrowdCharacterVariants.Num();
-	const int32 NumMatsPerVariant = 6;
+	const int32 NumMatsPerVariant = CrowdCharacterVariants.Num() > 0 ? CrowdCharacterVariants[0].VATMats.Num() : 0;
 	const int32 TotalHISMsNeeded = NumVariants * NumMatsPerVariant;
 
+	bool bIsHISMsInvalid = (CrowdHISMs.Num() != TotalHISMsNeeded);
+	if (!bIsHISMsInvalid)
+	{
+		for (UHierarchicalInstancedStaticMeshComponent* HISM : CrowdHISMs)
+		{
+			if (!HISM)
+			{
+				bIsHISMsInvalid = true;
+				break;
+			}
+		}
+	}
+
 	//initialize
-	if (CrowdHISMs.Num() != TotalHISMsNeeded)
+	if (bIsHISMsInvalid)
 	{
 		// cleanup
 		for (UHierarchicalInstancedStaticMeshComponent* HISM : CrowdHISMs)
@@ -77,7 +90,6 @@ void AAGlobalCrowdManager::SetupHISMComponents()
 
 			// enable custom data!!!!!!
 			NewHISM->NumCustomDataFloats = 1;
-
 
 			CrowdHISMs.Add(NewHISM);
 		}
