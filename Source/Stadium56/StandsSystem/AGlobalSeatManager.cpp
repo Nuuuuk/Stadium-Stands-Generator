@@ -107,6 +107,7 @@ void AAGlobalSeatManager::RebuildHISMs()
 	}
 
 	// 4. combine all Transforms
+	AllTransforms.Empty();
 	CombineTransforms(AllTransforms);
 
 	// 5. add to HISM
