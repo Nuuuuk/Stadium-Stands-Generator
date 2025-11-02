@@ -21,6 +21,8 @@ public:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	// tell manager bake after move.
 	virtual void PostEditMove(bool bFinished) override;
+	// or after tweak
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Parm")
 	FBox GetQueryBox() const;

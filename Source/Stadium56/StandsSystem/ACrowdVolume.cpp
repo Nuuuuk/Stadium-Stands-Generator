@@ -54,6 +54,15 @@ void AACrowdVolume::PostEditMove(bool bFinished)
 	}
 }
 
+void AACrowdVolume::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (!CrowdManager) return;
+	if (PropertyChangedEvent.ChangeType == EPropertyChangeType::Interactive) return;
+	CrowdManager->BakeCrowd();
+}
+
 // Called when the game starts or when spawned
 void AACrowdVolume::BeginPlay()
 {
