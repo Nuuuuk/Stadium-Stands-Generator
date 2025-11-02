@@ -14,7 +14,7 @@ AACrowdVolume::AACrowdVolume()
 
 	QueryBox = CreateDefaultSubobject<UBoxComponent>(TEXT("QueryBox"));
 	RootComponent = QueryBox;
-	QueryBox->SetBoxExtent(FVector(1000.f, 800.f, 500.f)); // д╛хо 10m x 8m x 5m
+	QueryBox->SetBoxExtent(FVector(500.f, 400.f, 300.f)); // 5m x 4m x 3m
 
 	CrowdDensity = 0.8f; // defaykt
 	RandomSeed = -487486592;
