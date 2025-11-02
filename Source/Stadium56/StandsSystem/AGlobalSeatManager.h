@@ -24,6 +24,9 @@ public:
 	// remove from manager when destroyed
 	void UnregisterSeatChunk(AActor* Spawner);
 
+	// all called seat transforms
+	TArray<FTransform> AllTransforms;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override; 
