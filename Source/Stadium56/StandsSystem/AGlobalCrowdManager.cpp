@@ -174,6 +174,9 @@ void AAGlobalCrowdManager::PopulateHISMs(const TArray<FTransform>& FilteredSeats
 	const int32 NumMats = CrowdCharacterVariants.Num() > 0 ? CrowdCharacterVariants[0].VATMats.Num() : 0;
 	const int32 TotalHISMs = CrowdHISMs.Num();
 
+	// validate
+	if (NumMats == 0 || TotalHISMs == 0) return;
+
 	// transform of each hism
 	TArray<TArray<FTransform>> HismTransforms;
 	HismTransforms.SetNum(TotalHISMs);
@@ -190,7 +193,12 @@ void AAGlobalCrowdManager::PopulateHISMs(const TArray<FTransform>& FilteredSeats
 	{
 		// select a combination of mesh and mat
 		const int32 MeshIdx = FMath::RandRange(0, NumMeshes - 1);
-		const int32 MatIdx = FMath::RandRange(0, NumMats - 1);
+
+		// weighted pick
+		const FCharacterVariant& Variant = CrowdCharacterVariants[MeshIdx];
+		const int32 MatIdx = PickMIByWeight();
+		if (MatIdx == -1) continue; //no mat found
+
 		const int32 HismIndex = (MeshIdx * NumMats) + MatIdx;
 
 		const float RandomDataForThisInstance = FMath::FRand();
@@ -233,6 +241,49 @@ void AAGlobalCrowdManager::BakeCrowd()
 	PopulateHISMs(FilteredSeats);
 
 	UE_LOG(LogTemp, Log, TEXT("Crowd Baked %d instances"), FilteredSeats.Num());
+}
+
+int32 AAGlobalCrowdManager::PickMIByWeight() const
+{
+	// mi slots
+	const int32 NumMats = (CrowdCharacterVariants.Num() > 0)
+		? CrowdCharacterVariants[0].VATMats.Num()
+		: 0;
+
+	// 2. weight slots
+	const int32 NumWeights = MaterialWeights.GetNumWeights();
+
+	// 3. get min one
+	const int32 NumOptions = FMath::Min(NumMats, NumWeights);
+
+	if (NumOptions == 0)
+	{
+		return -1;
+	}
+
+	// 4. sum
+	float sum = 0.0f;
+	for (int32 i = 0; i < NumOptions; ++i)
+		sum += MaterialWeights.GetWeightByIndex(i);
+
+	if (sum <= 0.0f)
+		return FMath::RandRange(0, NumOptions - 1); // then pure random
+
+	// 5. pick by weight
+	float Roll = FMath::FRand() * sum;
+
+	// 6. find the domain
+	float CurrentWeightSum = 0.0f;
+	for (int32 i = 0; i < NumOptions; ++i)
+	{
+		CurrentWeightSum += MaterialWeights.GetWeightByIndex(i);
+		if (Roll < CurrentWeightSum)
+		{
+			return i; // found
+		}
+	}
+
+	return NumOptions - 1;
 }
 
 // Called when the game starts or when spawned

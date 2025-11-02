@@ -11,6 +11,51 @@
 
 class AAGlobalSeatManager;
 
+USTRUCT(BlueprintType)
+struct FMaterialWeights
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weights", meta = (ClampMin = "0.0"))
+	float WaveHand;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weights", meta = (ClampMin = "0.0"))
+	float ClapHigh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weights", meta = (ClampMin = "0.0"))
+	float Clap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weights", meta = (ClampMin = "0.0"))
+	float Upset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weights", meta = (ClampMin = "0.0"))
+	float Idle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weights", meta = (ClampMin = "0.0"))
+	float Yell;
+
+	FMaterialWeights()
+	{
+		WaveHand = 100.f;
+		ClapHigh = 100.f;
+		Clap = 100.f;
+		Upset = 100.f;
+		Idle = 100.f;
+		Yell = 100.f;
+	}
+
+	float GetWeightByIndex(int32 Index) const
+	{
+		switch (Index)
+		{
+			case 0: return WaveHand;
+			case 1: return ClapHigh;
+			case 2: return Clap;
+			case 3: return Upset;
+			case 4: return Idle;
+			case 5: return Yell;
+			default: return 0.0f;
+		}
+	}
+
+	int32 GetNumWeights() const { return 6; }
+};
+
 // 3sm * 6MI vat
 USTRUCT(BlueprintType)
 struct FCharacterVariant
@@ -71,6 +116,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Parm")
 	TArray<UHierarchicalInstancedStaticMeshComponent*> CrowdHISMs;
 
+	// possibility weights
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm|Assets")
+	FMaterialWeights MaterialWeights;
+
 private:
 	// bake when spawned first timne
 	UPROPERTY()
@@ -86,6 +135,8 @@ private:
 
 	// randomly assign crowd to HISMs
 	void PopulateHISMs(const TArray<FTransform>& FilteredSeats);
+
+	int32 PickMIByWeight() const;
 
 public:	
 	// Called every frame
