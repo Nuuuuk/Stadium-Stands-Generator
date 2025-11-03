@@ -38,13 +38,6 @@ AAGlobalSeatManager::AAGlobalSeatManager()
 	ConeRotationOffset = FRotator(-90.0f, 0.0f, 0.0f);
 }
 
-void AAGlobalSeatManager::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-
-	RebuildHISMs();
-}
-
 // called by ASeatSpawner to register Transforms
 void AAGlobalSeatManager::RegisterSeatChunk(AActor* Spawner, const TArray<FTransform>& RawTransforms)
 {
@@ -133,7 +126,10 @@ void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& OutTransforms)
 		if (AASeatSpawnerBase* Spawner = Cast<AASeatSpawnerBase>(Pair.Key.Get()))
 		{
 			const FRotator BaseRotation = Spawner->GetLocalForwardDirection().Rotation(); 
-			const FTransform& SpawnerWorldTransform = Spawner->GetActorTransform();
+
+			FTransform SpawnerWorldTransform = Spawner->GetActorTransform();
+			SpawnerWorldTransform.SetScale3D(FVector(1.0f, 1.0f, 1.0f));
+
 			
 			for (const FTransform& RawTransform : Pair.Value)
 			{

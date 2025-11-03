@@ -93,25 +93,6 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	}
 }
 
-void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-	
-	// 1. update splines data
-	UpdateAndValidateSpline();
-
-	// 3. math out all transforms -- the scan row intersection algorithm
-	const TArray<FTransform> GeneratedTransforms = GenerateTransforms();
-
-	if (!SeatManager)
-	{
-		return;
-	}
-
-	// 5. transforms to Manager
-	SeatManager->RegisterSeatChunk(this, GeneratedTransforms);
-}
-
 void AASeatSpawnerBase::UpdateAndValidateSpline()
 {
 	// lock point 0
@@ -163,14 +144,17 @@ TArray<FTransform> AASeatSpawnerBase::GenerateTransforms()
 		return GeneratedTransforms; // return empty
 	}
 
+	// spline is root so actor scale = spline scale
+	const FVector ActorScale = GetActorScale3D();
 
 	const int32 NumSplinePoints = SeatSpline->GetNumberOfSplinePoints(); //ordered
 	for (int32 i = 0; i < NumSplinePoints; ++i)
 	{
 		const FVector Location3D = SeatSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
-		SplinePoints2D.Add(FVector2D(Location3D.X, Location3D.Y));
+		const FVector Location3D_Scaled = Location3D * ActorScale;
+		SplinePoints2D.Add(FVector2D(Location3D_Scaled.X, Location3D_Scaled.Y));
 		// add pt to bounds
-		SplineBounds += Location3D;
+		SplineBounds += Location3D_Scaled;
 	}
 
 

@@ -19,19 +19,15 @@ public class Stadium56 : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate"
-		});
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Stadium56",
 			"Stadium56/Variant_Horror",
-			"Stadium56/Variant_Horror/UI",
-			"Stadium56/Variant_Shooter",
-			"Stadium56/Variant_Shooter/AI",
-			"Stadium56/Variant_Shooter/UI",
-			"Stadium56/Variant_Shooter/Weapons"
-		});
+            "Stadium56/Variant_Horror/UI"
+        });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

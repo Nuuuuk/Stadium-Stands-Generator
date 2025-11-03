@@ -18,7 +18,6 @@ public:
 	// Sets default values for this actor's properties
 	AASeatSpawnerBase(); 
 	
-	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void Destroyed() override;
 	FVector GetLocalForwardDirection() const { return LocalForwardDirection; }
 
@@ -53,9 +52,11 @@ protected:
 
 
 	// lock 0 and clamp all pts' z>0
+	UFUNCTION(BlueprintCallable, Category = "Parm")
 	void UpdateAndValidateSpline();
 
 	// scan row intersection algorithm to calculate seat transforms
+	UFUNCTION(BlueprintCallable, Category = "Parm")
 	TArray<FTransform> GenerateTransforms();
 
 public:	

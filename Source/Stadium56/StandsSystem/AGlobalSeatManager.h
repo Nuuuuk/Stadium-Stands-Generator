@@ -17,8 +17,8 @@ public:
 	// Sets default values for this actor's properties
 	AAGlobalSeatManager();
 
-	virtual void OnConstruction(const FTransform& Transform) override;
 	// called by ASeatSpawner to register Transforms
+	UFUNCTION(BlueprintCallable, Category = "Parm")
 	void RegisterSeatChunk(AActor* Spawner, const TArray<FTransform>& RawTransforms);
 
 	// remove from manager when destroyed
@@ -53,12 +53,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parm|Debug")
 	FRotator ConeRotationOffset;
 
+	// clean and rebuild
+	UFUNCTION(BlueprintCallable, Category = "Parm")
+	void RebuildHISMs();
+
 private:
 	// store all seat transforms
 	TMap<TWeakObjectPtr<AActor>, TArray<FTransform>> ChunkData;
-
-	// clean and rebuild
-	void RebuildHISMs();
 
 	// internal, set seat vs cone
 	void UpdateHISMVisuals();
