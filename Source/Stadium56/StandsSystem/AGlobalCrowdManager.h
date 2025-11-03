@@ -113,7 +113,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Parm|Assets")
 	TArray<FCharacterVariant> CrowdCharacterVariants;
 
-	UPROPERTY(VisibleAnywhere, Category = "Parm")
+	UPROPERTY()
 	TArray<UHierarchicalInstancedStaticMeshComponent*> CrowdHISMs;
 
 	// possibility weights

@@ -88,6 +88,8 @@ void AAGlobalCrowdManager::SetupHISMComponents()
 			NewHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			NewHISM->RegisterComponent();
 
+			// stop gizmo highlight  SLOW!!!!
+			NewHISM->bSelectable = false;
 			// enable custom data!!!!!!
 			NewHISM->NumCustomDataFloats = 1;
 
@@ -150,8 +152,9 @@ TArray<FTransform> AAGlobalCrowdManager::GetFilteredSeatTransforms() const
 		{
 			if (Volume && Volume->GetQueryBox().IsInside(SeatLocation))
 			{
-				// density from volume
-				FRandomStream Stream(Volume->RandomSeed + FMath::TruncToInt(SeatLocation.X + SeatLocation.Y));
+				// density from volumec
+				const int32 LocationHash = GetTypeHash(SeatLocation);
+				FRandomStream Stream(Volume->RandomSeed + LocationHash);
 
 				if (Stream.GetFraction() < Volume->CrowdDensity)
 				{

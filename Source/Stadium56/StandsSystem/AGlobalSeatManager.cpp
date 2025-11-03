@@ -16,9 +16,12 @@ AAGlobalSeatManager::AAGlobalSeatManager()
 	// HISM as root
 	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
 	RootComponent = DefaultSceneRoot;
+	//HISMRoot = CreateDefaultSubobject<USceneComponent>(TEXT("HISMRoot"));
+	//HISMRoot->SetupAttachment(RootComponent);
 	SeatGridHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("SeatGridHISM"));
 	SeatGridHISM->SetupAttachment(RootComponent);
 	SeatGridHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//SeatGridHISM->bSelectable = false;
 
 	// debug cone
 	DebugCone = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DebugCone"));
@@ -90,6 +93,7 @@ void AAGlobalSeatManager::RebuildHISMs()
 
 	// 2. clean all old instances
 	SeatGridHISM->ClearInstances();
+	//SeatGridHISM->bSelectable = false;
 
 	// 3. validate
 	const bool bHasValidMesh = (SeatGridHISM->GetStaticMesh() != nullptr);
