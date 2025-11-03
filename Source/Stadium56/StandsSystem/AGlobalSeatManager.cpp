@@ -38,13 +38,6 @@ AAGlobalSeatManager::AAGlobalSeatManager()
 	ConeRotationOffset = FRotator(-90.0f, 0.0f, 0.0f);
 }
 
-void AAGlobalSeatManager::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-
-	RebuildHISMs();
-}
-
 // called by ASeatSpawner to register Transforms
 void AAGlobalSeatManager::RegisterSeatChunk(AActor* Spawner, const TArray<FTransform>& RawTransforms)
 {
