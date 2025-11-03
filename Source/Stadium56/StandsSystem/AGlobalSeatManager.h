@@ -18,6 +18,7 @@ public:
 	AAGlobalSeatManager();
 
 	// called by ASeatSpawner to register Transforms
+	UFUNCTION(BlueprintCallable, Category = "Parm")
 	void RegisterSeatChunk(AActor* Spawner, const TArray<FTransform>& RawTransforms);
 
 	// remove from manager when destroyed

@@ -93,25 +93,6 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 	}
 }
 
-void AASeatSpawnerBase::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-	
-	// 1. update splines data
-	UpdateAndValidateSpline();
-
-	// 3. math out all transforms -- the scan row intersection algorithm
-	const TArray<FTransform> GeneratedTransforms = GenerateTransforms();
-
-	if (!SeatManager)
-	{
-		return;
-	}
-
-	// 5. transforms to Manager
-	SeatManager->RegisterSeatChunk(this, GeneratedTransforms);
-}
-
 void AASeatSpawnerBase::UpdateAndValidateSpline()
 {
 	// lock point 0
