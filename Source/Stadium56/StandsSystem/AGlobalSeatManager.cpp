@@ -13,12 +13,12 @@ AAGlobalSeatManager::AAGlobalSeatManager()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	// HISM as root
 	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
 	RootComponent = DefaultSceneRoot;
 	SeatGridHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("SeatGridHISM"));
 	SeatGridHISM->SetupAttachment(RootComponent);
 	SeatGridHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SeatGridHISM->bSelectable = false;
 
 	// debug cone
 	DebugCone = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DebugCone"));
@@ -90,6 +90,7 @@ void AAGlobalSeatManager::RebuildHISMs()
 
 	// 2. clean all old instances
 	SeatGridHISM->ClearInstances();
+	SeatGridHISM->bSelectable = false;
 
 	// 3. validate
 	const bool bHasValidMesh = (SeatGridHISM->GetStaticMesh() != nullptr);

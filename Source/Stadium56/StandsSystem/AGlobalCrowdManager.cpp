@@ -88,6 +88,8 @@ void AAGlobalCrowdManager::SetupHISMComponents()
 			NewHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			NewHISM->RegisterComponent();
 
+			// stop gizmo highlight  SLOW!!!!
+			NewHISM->bSelectable = false;
 			// enable custom data!!!!!!
 			NewHISM->NumCustomDataFloats = 1;
 

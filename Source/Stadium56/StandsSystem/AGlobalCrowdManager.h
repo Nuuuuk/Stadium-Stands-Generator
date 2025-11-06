@@ -65,7 +65,7 @@ struct FCharacterVariant
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset")
 	UStaticMesh* Mesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset")
+	UPROPERTY()
 	TArray<UMaterialInterface*> VATMats;
 
 	FCharacterVariant() //default
@@ -113,7 +113,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Parm|Assets")
 	TArray<FCharacterVariant> CrowdCharacterVariants;
 
-	UPROPERTY(VisibleAnywhere, Category = "Parm")
+	UPROPERTY()
 	TArray<UHierarchicalInstancedStaticMeshComponent*> CrowdHISMs;
 
 	// possibility weights

@@ -25,10 +25,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// spawner manager
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Parm|Manager", meta = (DisplayPriority = "-1"))
-	AAGlobalSeatManager* SeatManager;
-
 	// Spline¡£editable in child bp
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm|Spline")
 	USplineComponent* SeatSpline;
@@ -60,6 +56,11 @@ protected:
 	TArray<FTransform> GenerateTransforms();
 
 public:	
+
+	// spawner manager
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Parm|Manager", meta = (DisplayPriority = "-1"))
+	AAGlobalSeatManager* SeatManager;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
