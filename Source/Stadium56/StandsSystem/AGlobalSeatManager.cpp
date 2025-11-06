@@ -42,7 +42,10 @@ AAGlobalSeatManager::AAGlobalSeatManager()
 void AAGlobalSeatManager::RegisterSeatChunk(AActor* Spawner, const TArray<FTransform>& RawTransforms)
 {
 	if (!Spawner) return;
-	ChunkData.Add(Spawner, RawTransforms);
+
+	FSeatTransformChunk NewChunk;
+	NewChunk.Transforms = RawTransforms;
+	ChunkData.Add(Spawner, NewChunk);
 	RebuildHISMs();
 }
 
@@ -122,7 +125,7 @@ void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& OutTransforms)
 	const FVector IndividualScale = bUseDebugMesh ? FVector(0.5f) : FVector(1.0f); 
 	const FRotator IndividualRotation = bUseDebugMesh ? ConeRotationOffset : SeatRotationOffset;
 
-	for (const TPair<TWeakObjectPtr<AActor>, TArray<FTransform>>& Pair : ChunkData)
+	for (const TPair<TWeakObjectPtr<AActor>, FSeatTransformChunk>& Pair : ChunkData)
 	{
 		if (AASeatSpawnerBase* Spawner = Cast<AASeatSpawnerBase>(Pair.Key.Get()))
 		{
@@ -132,7 +135,7 @@ void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& OutTransforms)
 			SpawnerWorldTransform.SetScale3D(FVector(1.0f, 1.0f, 1.0f));
 
 			
-			for (const FTransform& RawTransform : Pair.Value)
+			for (const FTransform& RawTransform : Pair.Value.Transforms)
 			{
 				const FTransform FinalLocalTransform(
 					BaseRotation + IndividualRotation,
@@ -142,6 +145,14 @@ void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& OutTransforms)
 				OutTransforms.Add(FinalLocalTransform * SpawnerWorldTransform);
 			}
 		}
+	}
+}
+
+void AAGlobalSeatManager::TellSeatSpawnersToConstruct(AASeatSpawnerBase* Spawner)
+{
+	if (Spawner && !Spawner->SeatManager)
+	{
+		Spawner->RerunConstructionScripts();
 	}
 }
 

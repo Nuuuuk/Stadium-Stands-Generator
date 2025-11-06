@@ -8,6 +8,15 @@
 #include "Components/StaticMeshComponent.h"
 #include "AGlobalSeatManager.generated.h"
 
+USTRUCT()
+struct FSeatTransformChunk
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FTransform> Transforms;
+};
+
 UCLASS(meta = (PrioritizeCategories = "Parm"))
 class STADIUM56_API AAGlobalSeatManager : public AActor
 {
@@ -57,9 +66,14 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Parm")
 	void RebuildHISMs();
 
+	// tell BP_SeatArea to run onconstruction
+	UFUNCTION(BlueprintCallable, Category = "Parm")
+	void TellSeatSpawnersToConstruct(AASeatSpawnerBase* Spawner);
+
 private:
 	// store all seat transforms
-	TMap<TWeakObjectPtr<AActor>, TArray<FTransform>> ChunkData;
+	UPROPERTY()
+	TMap<TWeakObjectPtr<AActor>, FSeatTransformChunk> ChunkData;
 
 	// internal, set seat vs cone
 	void UpdateHISMVisuals();
