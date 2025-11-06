@@ -152,8 +152,11 @@ TArray<FTransform> AAGlobalCrowdManager::GetFilteredSeatTransforms() const
 		{
 			if (Volume && Volume->GetQueryBox().IsInside(SeatLocation))
 			{
-				// density from volume
-				FRandomStream Stream(Volume->RandomSeed + FMath::TruncToInt(SeatLocation.X + SeatLocation.Y));
+				//// density from volume
+				//FRandomStream Stream(Volume->RandomSeed + FMath::TruncToInt(SeatLocation.X*-2000.f + SeatLocation.Y*100.f));
+				// density from volumec
+				const int32 LocationHash = GetTypeHash(SeatLocation);
+				FRandomStream Stream(Volume->RandomSeed + LocationHash);
 
 				if (Stream.GetFraction() < Volume->CrowdDensity)
 				{
