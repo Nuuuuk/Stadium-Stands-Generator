@@ -68,7 +68,8 @@ protected:
 
 private:
 	// store all seat transforms
-	TMap<TWeakObjectPtr<AActor>, TArray<FTransform>> ChunkData;
+	UPROPERTY()
+	TMap<TWeakObjectPtr<AActor>, FSeatTransformChunk> ChunkData;
 
 	// internal, set seat vs cone
 	void UpdateHISMVisuals();
