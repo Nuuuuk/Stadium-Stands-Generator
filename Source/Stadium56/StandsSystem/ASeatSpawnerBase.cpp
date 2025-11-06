@@ -104,8 +104,8 @@ AASeatSpawnerBase::AASeatSpawnerBase()
 		SeatSpline->ClearSplinePoints(false); // clear default pts
 
 		SeatSpline->AddSplinePoint(FVector(0.f, 0.f, 0.f), ESplineCoordinateSpace::Local, false);
-		SeatSpline->AddSplinePoint(FVector(1000.f, 0.f, 0.f), ESplineCoordinateSpace::Local, false);
-		SeatSpline->AddSplinePoint(FVector(1000.f, 1000.f, 0.f), ESplineCoordinateSpace::Local, false);
+		SeatSpline->AddSplinePoint(FVector(1000.f, 0.f, 250.f), ESplineCoordinateSpace::Local, false);
+		SeatSpline->AddSplinePoint(FVector(1000.f, 1000.f, 250.f), ESplineCoordinateSpace::Local, false);
 		SeatSpline->AddSplinePoint(FVector(0.f, 1000.f, 0.f), ESplineCoordinateSpace::Local, false); 
 		
 		SeatSpline->SetSplinePointType(0, ESplinePointType::Linear, false);
