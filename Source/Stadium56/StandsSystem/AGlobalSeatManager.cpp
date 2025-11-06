@@ -19,6 +19,7 @@ AAGlobalSeatManager::AAGlobalSeatManager()
 	SeatGridHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("SeatGridHISM"));
 	SeatGridHISM->SetupAttachment(RootComponent);
 	SeatGridHISM->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SeatGridHISM->bSelectable = false;
 
 	// debug cone
 	DebugCone = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DebugCone"));
