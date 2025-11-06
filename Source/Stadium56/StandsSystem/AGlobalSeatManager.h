@@ -34,7 +34,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* DefaultSceneRoot;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parm|Seat")
+	UPROPERTY(BlueprintReadWrite)
 	UHierarchicalInstancedStaticMeshComponent* SeatGridHISM;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Parm|Seat")
