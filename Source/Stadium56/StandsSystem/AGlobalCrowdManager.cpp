@@ -7,6 +7,7 @@
 #include "Components/SceneComponent.h"
 #include "StandsSystem/ACrowdVolume.h"
 #include "EngineUtils.h"
+#include "Templates/TypeHash.h"
 
 // Sets default values
 AAGlobalCrowdManager::AAGlobalCrowdManager()
