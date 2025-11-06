@@ -8,6 +8,15 @@
 #include "Components/StaticMeshComponent.h"
 #include "AGlobalSeatManager.generated.h"
 
+USTRUCT()
+struct FSeatTransformChunk
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FTransform> Transforms;
+};
+
 UCLASS(meta = (PrioritizeCategories = "Parm"))
 class STADIUM56_API AAGlobalSeatManager : public AActor
 {
