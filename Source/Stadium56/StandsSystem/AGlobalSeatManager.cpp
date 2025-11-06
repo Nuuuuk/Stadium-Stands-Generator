@@ -148,6 +148,14 @@ void AAGlobalSeatManager::CombineTransforms(TArray<FTransform>& OutTransforms)
 	}
 }
 
+void AAGlobalSeatManager::TellSeatSpawnersToConstruct(AASeatSpawnerBase* Spawner)
+{
+	if (Spawner && !Spawner->SeatManager)
+	{
+		Spawner->RerunConstructionScripts();
+	}
+}
+
 // Called when the game starts or when spawned
 void AAGlobalSeatManager::BeginPlay()
 {

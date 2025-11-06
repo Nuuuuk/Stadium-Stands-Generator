@@ -66,6 +66,10 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Parm")
 	void RebuildHISMs();
 
+	// tell BP_SeatArea to run onconstruction
+	UFUNCTION(BlueprintCallable, Category = "Parm")
+	void TellSeatSpawnersToConstruct(AASeatSpawnerBase* Spawner);
+
 private:
 	// store all seat transforms
 	UPROPERTY()
