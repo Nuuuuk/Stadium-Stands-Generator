@@ -65,7 +65,7 @@ struct FCharacterVariant
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset")
 	UStaticMesh* Mesh;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset")
 	TArray<UMaterialInterface*> VATMats;
 
 	FCharacterVariant() //default
