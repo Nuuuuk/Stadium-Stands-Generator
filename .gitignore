@@ -1,3 +1,6 @@
+# PyCharm
+.idea/
+
 # Houdini
 Plugins/Houdini*
 **/HoudiniEngine/Temp/**
