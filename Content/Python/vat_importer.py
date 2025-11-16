@@ -19,17 +19,19 @@ def _log(message):
 def _log_error(message):
     """log error in unreal"""
     print(f"[VAT_Importer.py] ERROR: {message}")
-
-
-# -- 1. import fbx
-
-def _build_fbx_import_task(fbx_file_path, ue_destination_path):
+def _initialize_task(fbx_file_path, ue_target_path):
     task = unreal.AssetImportTask()
     task.set_editor_property('filename', fbx_file_path)
-    task.set_editor_property('destination_path', ue_destination_path)
+    task.set_editor_property('destination_path', ue_target_path)
     task.set_editor_property('replace_existing', True)  # re import
     task.set_editor_property('save', False)
     task.set_editor_property('automated', True)
+    return task
+
+# -- 1. import fbx
+
+def _build_fbx_import_task(fbx_file_path, ue_target_path):
+    task = _initialize_task(fbx_file_path, ue_target_path)
 
     options = unreal.FbxImportUI()
     options.set_editor_property('import_as_skeletal', False) # import skeletal meshes - false
