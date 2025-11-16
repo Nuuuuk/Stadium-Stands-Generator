@@ -29,27 +29,28 @@ def _build_fbx_import_task(fbx_file_path, ue_destination_path):
     task.set_editor_property('destination_path', ue_destination_path)
     task.set_editor_property('replace_existing', True)  # re import
     task.set_editor_property('save', False)
+    task.set_editor_property('automated', True)
 
-    options = unreal.FbxImportUi()
+    options = unreal.FbxImportUI()
     options.set_editor_property('import_as_skeletal', False) # import skeletal meshes - false
     options.set_editor_property('import_materials', False)
     options.set_editor_property('import_textures', False)
-    options.set_editor_property('import_collision', False)
 
     # sm data
     sm_import_data = unreal.FbxStaticMeshImportData()
     options.set_editor_property('import_mesh', True)
-    sm_import_data.set_editor_property('recompute_normals', False)
-    sm_import_data.set_editor_property('recompute_tangents', False)
+    sm_import_data.set_editor_property('normal_import_method', unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS_AND_TANGENTS)
     sm_import_data.set_editor_property('build_nanite', False)
     sm_import_data.set_editor_property('remove_degenerates', False)
+    sm_import_data.set_editor_property('auto_generate_collision', False)
+    sm_import_data.set_editor_property('import_mesh_lo_ds', True)
     # allocate sm data to options
     options.set_editor_property('static_mesh_import_data', sm_import_data)
 
     task.set_editor_property('options', options)
     return task
 
-def import_fbx(source_art_path, ue_target_path, character_name=""):
+def import_fbx(source_path, ue_target_path, character_name=""):
     """
     import fbx in geo
     if already existed, reimport
@@ -57,7 +58,8 @@ def import_fbx(source_art_path, ue_target_path, character_name=""):
 
     _log("starting FBX import...")
 
-    geo_path = os.path.join(source_art_path, '/geo')
+    geo_path = os.path.join(source_path, 'geo')
+    _log(f"geo path: {geo_path}")
 
     if not os.path.isdir(geo_path):
         _log_error(f"Cannot find geo/ folder in {geo_path}")
@@ -90,3 +92,4 @@ def import_fbx(source_art_path, ue_target_path, character_name=""):
     except Exception as e:
         _log_error(f"Error occurred during fbx import: {e}")
 
+    
