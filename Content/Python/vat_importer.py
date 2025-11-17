@@ -283,6 +283,33 @@ def import_exr(source_path, ue_target_path, character_name=""):
 # -- 3. create Mis
 # ============================================================================
 
+def _get_vat_data_map(data_path):
+    """
+    return {'rp_carla': ['Angry', 'Clap', ...], 'rp_eric': ['Angry', 'Clap', ...]}
+    """
+    data_map = {}
+    if not os.path.isdir(data_path):
+        _log_error(f"Cannot find data folder: {data_path}")
+        return {}
+
+    for f in os.listdir(data_path):
+        if f.lower().endswith('_data.json'):
+            parts = f.replace('.json', '').split('_')
+            if len(parts) >= 2:
+                anim = parts[-1]
+                name = _extract_character_name(f)
+
+            if name not in data_map:
+                data_map[name] = []
+            data_map[name].append(anim)
+
+    # same anmi order
+    for char in data_map:
+        data_map[char].sort()
+
+    _log(f"Data found: {data_map}")
+    return data_map
+
 def _find_texture_asset(ue_target_path, character_name, anim_name, suffix):
     """
     find tex assets in UE
