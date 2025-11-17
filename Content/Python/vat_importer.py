@@ -54,7 +54,7 @@ def _build_fbx_import_task(fbx_file_path, ue_target_path):
 
 def import_fbx(source_path, ue_target_path, character_name=""):
     """
-    import fbx in geo
+    import fbx from geo
     if already existed, reimport
     """
 
@@ -67,7 +67,7 @@ def import_fbx(source_path, ue_target_path, character_name=""):
         _log_error(f"Cannot find geo/ folder in {geo_path}")
         return
 
-    fbx_files = [f for f in os.listdir(geo_path) if f.endswith('.fbx')]
+    fbx_files = [f for f in os.listdir(geo_path) if f.lower().endswith('.fbx')]
     if not fbx_files:
         _log_error(f"Cannot find fbx file in {geo_path}")
         return
