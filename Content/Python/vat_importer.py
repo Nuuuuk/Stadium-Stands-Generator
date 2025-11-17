@@ -63,32 +63,32 @@ def _extract_character_name(filename):
 
     return name
 
-def _get_all_fbx(source_path):
+def _get_all_file(source_path, folder='geo', suffix='.fbx'):
     """
     get all fbx from geo/
     """
-    geo_path = os.path.join(source_path, 'geo')
-    if not os.path.isdir(geo_path):
-        _log_error(f"Cannot find geo/ folder in {geo_path}")
+    path = os.path.join(source_path, folder)
+    if not os.path.isdir(path):
+        _log_error(f"Cannot find {folder}/ folder in {path}")
         return []
     try:
-        all_fbx_files = [f for f in os.listdir(geo_path) if f.lower().endswith('.fbx')]
+        all_files = [f for f in os.listdir(path) if f.lower().endswith( suffix )]
     except Exception as e:
-        _log_error(f"Error reading geo folder: {e}")
+        _log_error(f"Error reading {folder} folder: {e}")
         return []
 
-    if not all_fbx_files:
-        _log_error(f"Cannot find fbx file in {geo_path}")
+    if not all_files:
+        _log_error(f"Cannot find {suffix} file in {path}")
         return []
 
-    return all_fbx_files
+    return all_files
 
 def _get_names_from_geo(source_path):
     """
     get all fbx from geo/ then extract names from them
     """
 
-    all_fbx_files = _get_all_fbx(source_path)
+    all_fbx_files = _get_all_file(source_path, 'geo', '.fbx')
 
     characters = []
     for fbx in all_fbx_files:
@@ -130,12 +130,13 @@ def import_fbx(source_path, ue_target_path, character_name=""):
     if already existed, reimport
     """
 
+    _log("=" * 60)
     _log("starting FBX import...")
 
     geo_path = os.path.join(source_path, 'geo')
     _log(f"geo path: {geo_path}")
 
-    all_fbx_files = _get_all_fbx(source_path)
+    all_fbx_files = _get_all_file(source_path, 'geo', '.fbx')
 
     _log(f"Found {len(all_fbx_files)} FBX file(s) in total")
 
