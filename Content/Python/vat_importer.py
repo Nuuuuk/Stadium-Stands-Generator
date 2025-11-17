@@ -273,3 +273,23 @@ def import_exr(source_path, ue_target_path, character_name=""):
     except Exception as e:
         _log_error(f"Error occurred during fbx import: {e}")
         return False
+
+# ============================================================================
+# -- 3. create Mis
+# ============================================================================
+
+def _find_texture_asset(ue_target_path, character_name, anim_name, suffix):
+    """
+    find tex assets in UE
+    suffix: 'pos' / 'rot'
+    """
+
+    texture_name = f"T_{character_name}_{anim_name}_{suffix}"
+    asset_path = f"{ue_target_path}/{texture_name}.{texture_name}"
+
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+        return unreal.EditorAssetLibrary.load_asset(asset_path)
+
+    _log_error(f"Cannot find texture uasset '{texture_name}'")
+    return None
+
