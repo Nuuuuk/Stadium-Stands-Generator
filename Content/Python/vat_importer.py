@@ -103,33 +103,59 @@ def import_fbx(source_path, ue_target_path, character_name=""):
 
     if not os.path.isdir(geo_path):
         _log_error(f"Cannot find geo/ folder in {geo_path}")
-        return
+        return []
+    try:
+        all_fbx_files = [f for f in os.listdir(geo_path) if f.lower().endswith('.fbx')]
+    except Exception as e:
+        _log_error(f"Error reading geo folder: {e}")
+        return []
 
-    fbx_files = [f for f in os.listdir(geo_path) if f.lower().endswith('.fbx')]
-    if not fbx_files:
+    if not all_fbx_files:
         _log_error(f"Cannot find fbx file in {geo_path}")
-        return
+        return []
+
+    _log(f"Found {len(all_fbx_files)} FBX file(s) in total")
+
+    requested_characters = _parse_character_input(character_name)
 
     # only search for given character sm
-    if character_name:
-        _log(f"Only search for {character_name}")
+    if requested_characters:
+        _log(f"Filtering for characters: {requested_characters}")
 
-        fbx_files = [f for f in fbx_files if character_name in f]
+        fbx_files = []
+        for fbx in all_fbx_files:
+            character_name = _extract_character_name(fbx)
+            if character_name in requested_characters:
+                fbx_files.append(fbx)
+
         if not fbx_files:
             _log_error(f"Cannot find fbx file that matches '{character_name}' in {geo_path} ")
-            return
+            return []
+    else:
+        _log(f"No character input, importing all fbx ")
+        fbx_files = all_fbx_files
 
+    # import tasks
     tasks = []
+    imported_characters = []
+
     for fbx_name in fbx_files:
         full_fbx_path = os.path.join(geo_path, fbx_name)
         task = _build_fbx_import_task(full_fbx_path, ue_target_path)
         tasks.append(task)
-        _log(f"import task append: {fbx_name}")
 
+        if fbx_name not in imported_characters:
+            imported_characters.append(fbx_name)
+        _log(f"---> import pending: {fbx_name}")
+
+    # import execution
     try:
         asset_tools.import_asset_tasks(tasks)
         _log(f"finished importing {len(tasks)} tasks")
+        _log(f"Imported characters: {imported_characters}")
+        return imported_characters
     except Exception as e:
         _log_error(f"Error occurred during fbx import: {e}")
+        return []
 
     
