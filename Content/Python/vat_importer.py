@@ -193,8 +193,6 @@ def _build_exr_import_task(fbx_file_path, ue_target_path):
     texture_factory.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
     texture_factory.set_editor_property('lod_group', unreal.TextureGroup.TEXTUREGROUP_16_BIT_DATA)
     texture_factory.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_HDR)
-    texture_factory.set_editor_property('b_srgb', False)
-    texture_factory.set_editor_property('b_hdr', True)
 
     task.set_editor_property('factory', texture_factory)
     return task
