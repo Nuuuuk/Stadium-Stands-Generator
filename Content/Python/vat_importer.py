@@ -347,7 +347,7 @@ def _create_or_get_mi(ue_target_path, mi_name, parent_material):
         # set parent
         if mi_asset and parent_material:
             mi_asset.set_editor_property('parent', parent_material)
-            unreal.EditorAssetLibrary.save_loaded_asset(mi_asset)
+            # unreal.EditorAssetLibrary.save_loaded_asset(mi_asset)
             _log(f"new MI {mi_name} created")
             return mi_asset
         else:
