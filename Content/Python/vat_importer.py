@@ -5,6 +5,7 @@ Python backend for the VAT Importer Editor Utility Widget.
 import unreal
 import os
 import json
+import re
 
 print("--- [VAT Importer] Attempting to load vat_importer.py ---")
 
@@ -47,7 +48,25 @@ def _parse_character_input(character_input):
     _log(f"Parsed character input: {characters}")
     return characters
 
+def _extract_character_name(filename):
+    """
+    remove prefix and suffix
+    """
+    name = os.path.splitext(filename)[0]
+    name = re.sub(r'^(SM_|T_|MI_|M_)', '', name, flags=re.IGNORECASE)
+
+    # exr:
+    # T_rp_eric_Angry_pos -> rp_eric
+    match = re.match(r'^(.+?)_([A-Z][a-z]+)_(pos|rot)$', name)
+    if match:
+        return match.group(1)
+
+    return name
+
+
+# ============================================================================
 # -- 1. import fbx
+# ============================================================================
 
 def _build_fbx_import_task(fbx_file_path, ue_target_path):
     task = _initialize_task(fbx_file_path, ue_target_path)
