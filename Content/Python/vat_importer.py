@@ -59,7 +59,7 @@ def _extract_character_name(filename):
 
     # exr/json:
     # T_rp_eric_Angry_pos -> rp_eric
-    match = re.match(r'^(.+?)_([A-Z][a-z]+)_(pos|rot|data)$', name)
+    match = re.match(r'^(.+?)_([A-Za-z]+[0-9]*)_(pos|rot|data)$', name)
     if match:
         return match.group(1)
 
