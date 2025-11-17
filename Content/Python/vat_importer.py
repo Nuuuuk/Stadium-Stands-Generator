@@ -413,8 +413,8 @@ def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=
     for char_name, animations in filtered_data_map.items():
         _log(f"Processing character: {char_name} -- {animations}")
 
-        for idx, char_name in enumerate(animations, start=1):
             mi_name = f"MI_VATCharacter_{char_name}_{idx}"
+        for idx, anim_name in enumerate(animations, start=1):
 
             # MI's parent
             if idx == 1:
