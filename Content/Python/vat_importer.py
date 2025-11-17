@@ -98,6 +98,19 @@ def _get_names_from_geo(source_path):
 
     return characters
 
+def _chars_to_process(source_path, character_name):
+    # which names to import -----------------------------------------
+    requested_characters = _parse_character_input(character_name)
+
+    if requested_characters:
+        _log(f"Using provided characters: {requested_characters}")
+        target_characters = requested_characters
+    else:
+        _log(f"No character input.")
+        target_characters = _get_names_from_geo(source_path)
+
+    return target_characters
+
 # ============================================================================
 # -- 1. import fbx
 # ============================================================================
@@ -223,18 +236,10 @@ def import_exr(source_path, ue_target_path, character_name=""):
     _log(f"Found {len(all_exr_files)} EXR file(s) in tex folder")
 
     # which names to import -----------------------------------------
-    requested_characters = _parse_character_input(character_name)
-
-    if requested_characters:
-        _log(f"Using provided characters: {requested_characters}")
-        target_characters = requested_characters
-    else:
-        _log(f"No character input.")
-        target_characters = _get_names_from_geo(source_path)
-
-        if not target_characters:
-            _log_error(f"Cannot find any character in geo folder")
-            return False
+    target_characters = _chars_to_process(source_path, character_name)
+    if not target_characters:
+        _log_error(f"Cannot find any character in geo folder")
+        return False
 
     # filter exr by names -----------------------------------------
     exr_files = []
