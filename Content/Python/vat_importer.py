@@ -63,6 +63,25 @@ def _extract_character_name(filename):
 
     return name
 
+def _get_all_fbx(source_path):
+    """
+    get all fbx from geo/
+    """
+    geo_path = os.path.join(source_path, 'geo')
+    if not os.path.isdir(geo_path):
+        _log_error(f"Cannot find geo/ folder in {geo_path}")
+        return []
+    try:
+        all_fbx_files = [f for f in os.listdir(geo_path) if f.lower().endswith('.fbx')]
+    except Exception as e:
+        _log_error(f"Error reading geo folder: {e}")
+        return []
+
+    if not all_fbx_files:
+        _log_error(f"Cannot find fbx file in {geo_path}")
+        return []
+
+    return all_fbx_files
 
 # ============================================================================
 # -- 1. import fbx
@@ -101,18 +120,7 @@ def import_fbx(source_path, ue_target_path, character_name=""):
     geo_path = os.path.join(source_path, 'geo')
     _log(f"geo path: {geo_path}")
 
-    if not os.path.isdir(geo_path):
-        _log_error(f"Cannot find geo/ folder in {geo_path}")
-        return []
-    try:
-        all_fbx_files = [f for f in os.listdir(geo_path) if f.lower().endswith('.fbx')]
-    except Exception as e:
-        _log_error(f"Error reading geo folder: {e}")
-        return []
-
-    if not all_fbx_files:
-        _log_error(f"Cannot find fbx file in {geo_path}")
-        return []
+    all_fbx_files = _get_all_fbx(source_path)
 
     _log(f"Found {len(all_fbx_files)} FBX file(s) in total")
 
