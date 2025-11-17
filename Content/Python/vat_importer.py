@@ -358,3 +358,79 @@ def _create_or_get_mi(ue_target_path, mi_name, parent_material):
         _log_error(f"Error occurred during create or get MI material: {e}")
         return None
 
+def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=""):
+    """
+    create or update MIs:
+        -if character input: only input characters'
+        -if character empty: find all chars from geo/ then theirs
+    if already existed, update
+
+
+    For each character:
+    1. First MI uses base_parent_path as parent
+    2. Subsequent MIs use the first MI as parent
+    3. Set texture parameters (Pos Tex, Rot Tex)
+    4. Set bounds parameters from JSON data
+    """
+
+    _log("=" * 60)
+    _log("Starting Material Instance creation...")
+
+    # get char-anim mapping from json
+    data_path = os.path.join(source_path, 'data')
+    data_map = _get_vat_data_map(data_path)
+
+    if not data_map:
+        _log_error("No animation data found in data folder")
+        return False
+
+    # which names to import -----------------------------------------
+    target_characters = _chars_to_process(source_path, character_name)
+    if not target_characters:
+        _log_error(f"Cannot find any character in geo folder")
+        return False
+
+    # filter data_map by names -----------------------------------------
+    filtered_data_map = {k: v for k, v in data_map.items() if k in target_characters}
+
+    if not filtered_data_map:
+        _log_error(f"No json data found for characters: {target_characters}")
+        return False
+
+    _log(f"Creating MIs for: {list(filtered_data_map.keys())}")
+
+    base_parent_material = None
+    if base_parent_path:
+        if unreal.EditorAssetLibrary.does_asset_exist(base_parent_path):
+            base_parent_material = unreal.EditorAssetLibrary.load_asset(base_parent_path)
+        else:
+            _log_error(f"Cannot find base_parent_path '{base_parent_path}'")
+            return False
+
+    first_mi = None
+
+    # process each char
+    for char_name, animations in filtered_data_map.items():
+        _log(f"Processing character: {char_name} -- {animations}")
+
+        for idx, char_name in enumerate(animations, start=1):
+            mi_name = f"MI_VATCharacter_{char_name}_{idx}"
+
+            # MI's parent
+            if idx == 1:
+                parent_mat = base_parent_material
+            else:
+                parent_mat = first_mi
+
+            # create or get MI
+            mi_asset = _create_or_get_mi(ue_target_path, mi_name, parent_mat)
+
+            if not mi_asset:
+                _log_error(f"Cannot create or get MI: {mi_name}")
+                continue
+
+            # store first MI
+            if idx == 1:
+                first_mi = mi_asset
+
+
