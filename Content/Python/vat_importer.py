@@ -296,7 +296,7 @@ def _get_vat_data_map(data_path):
 
     for f in os.listdir(data_path):
         if f.lower().endswith('_data.json'):
-            parts = f.replace('.json', '').split('_')
+            parts = f.replace('_data.json', '').split('_')
             if len(parts) >= 2:
                 anim = parts[-1]
                 name = _extract_character_name(f)
