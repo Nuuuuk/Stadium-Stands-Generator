@@ -199,7 +199,7 @@ def _build_exr_import_task(fbx_file_path, ue_target_path):
     task.set_editor_property('factory', texture_factory)
     return task
 
-def import_exr_textures(source_path, ue_target_path, character_name=""):
+def import_exr(source_path, ue_target_path, character_name=""):
     """
     import exr from tex:
         -if character input: import only input characters' exrs
