@@ -358,6 +358,34 @@ def _create_or_get_mi(ue_target_path, mi_name, parent_material):
         _log_error(f"Error occurred during create or get MI material: {e}")
         return None
 
+def _set_MI_texture_parm(mi_asset, parm_name, tex_asset):
+    """
+    set texture parm for MI
+    """
+    if not tex_asset or not mi_asset:
+        return False
+
+    try:
+        unreal.MaterialEditingLibrary.set_material_instance_texture_parameter_value(mi_asset, parm_name, tex_asset)
+        return True
+    except Exception as e:
+        _log_error(f"Error occurred during set texture parm {parm_name}: {e}")
+        return False
+
+def _set_MI_scalar_parm(mi_asset, parm_name, value):
+    """
+    set texture parm for MI
+    """
+    if not mi_asset:
+        return False
+
+    try:
+        unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(mi_asset, parm_name, value)
+        return True
+    except Exception as e:
+        _log_error(f"Error occurred during set scalar parm {parm_name}: {e}")
+        return False
+
 def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=""):
     """
     create or update MIs:
