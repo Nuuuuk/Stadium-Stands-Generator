@@ -19,6 +19,11 @@ def _log(message):
 def _log_error(message):
     """log error in unreal"""
     print(f"[VAT_Importer.py] ERROR: {message}")
+
+# ============================================================================
+# Utility Functions
+# ============================================================================
+
 def _initialize_task(fbx_file_path, ue_target_path):
     task = unreal.AssetImportTask()
     task.set_editor_property('filename', fbx_file_path)
@@ -27,6 +32,20 @@ def _initialize_task(fbx_file_path, ue_target_path):
     task.set_editor_property('save', False)
     task.set_editor_property('automated', True)
     return task
+
+def _parse_character_input(character_input):
+    """
+    parse input names, divided by comma
+    """
+
+    if not character_input or not character_input.strip():
+        return []
+
+    characters = [c.strip() for c in character_input.split(',')] #spaces
+    characters = [c for c in characters if c] #empty
+
+    _log(f"Parsed character input: {characters}")
+    return characters
 
 # -- 1. import fbx
 
