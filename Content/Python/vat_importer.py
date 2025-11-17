@@ -7,6 +7,8 @@ import os
 import json
 import re
 
+from unreal import MaterialInstanceConstantFactoryNew
+
 print("--- [VAT Importer] Attempting to load vat_importer.py ---")
 
 
@@ -324,4 +326,35 @@ def _find_texture_asset(ue_target_path, character_name, anim_name, suffix):
 
     _log_error(f"Cannot find texture uasset '{texture_name}'")
     return None
+
+def _create_or_get_mi(ue_target_path, mi_name, parent_material):
+    """
+    create or get existing material instance
+    """
+
+    mi_path = f"{ue_target_path}/{mi_name}.{mi_name}"
+
+    if unreal.EditorAssetLibrary.does_asset_exist(mi_path):
+        _log(f"{mi_name} already exists, will update")
+        return unreal.EditorAssetLibrary.load_asset(mi_path)
+
+    try:
+        mi_asset = asset_tools.create_asset(asset_name=mi_name,
+                                            package_path=ue_target_path,
+                                            asset_class=unreal.MaterialInstanceConstant,
+                                            factory=unreal.MaterialInstanceConstantFactoryNew()
+                                            )
+        # set parent
+        if mi_asset and parent_material:
+            mi_asset.set_editor_property('parent', parent_material)
+            unreal.EditorAssetLibrary.save_loaded_asset(mi_asset)
+            _log(f"new MI {mi_name} created")
+            return mi_asset
+        else:
+            _log_error(f"Cannot create MI {mi_name}")
+            return None
+
+    except Exception as e:
+        _log_error(f"Error occurred during create or get MI material: {e}")
+        return None
 
