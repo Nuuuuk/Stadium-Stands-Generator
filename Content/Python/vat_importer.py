@@ -83,6 +83,21 @@ def _get_all_fbx(source_path):
 
     return all_fbx_files
 
+def _get_names_from_geo(source_path):
+    """
+    get all fbx from geo/ then extract names from them
+    """
+
+    all_fbx_files = _get_all_fbx(source_path)
+
+    characters = []
+    for fbx in all_fbx_files:
+        character_name = _extract_character_name(fbx)
+        if character_name and character_name not in characters:
+            characters.append(character_name)
+
+    return characters
+
 # ============================================================================
 # -- 1. import fbx
 # ============================================================================
