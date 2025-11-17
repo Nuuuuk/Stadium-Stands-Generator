@@ -461,4 +461,13 @@ def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=
             if idx == 1:
                 first_mi = mi_asset
 
+            # setup textures
+            pos_tex = _find_texture_asset(ue_target_path, char_name, anim_name, "pos")
+            rot_tex = _find_texture_asset(ue_target_path, char_name, anim_name, "rot")
+
+            if pos_tex:
+                _set_MI_texture_parm(mi_asset, "Position Texture", pos_tex)
+            if rot_tex:
+                _set_MI_texture_parm(mi_asset, "Rotation Texture", rot_tex)
+
 
