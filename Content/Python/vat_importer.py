@@ -299,6 +299,20 @@ def import_exr(source_path, ue_target_path, character_name=""):
     try:
         asset_tools.import_asset_tasks(tasks)
         _log(f"finished importing {len(tasks)} tasks")
+
+        for exr_name in exr_files:
+            texture_name = os.path.splitext(exr_name)[0]
+            asset_path = f"{ue_target_path}/{texture_name}.{texture_name}"
+
+            if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+                texture_asset = unreal.EditorAssetLibrary.load_asset(asset_path)
+                if _apply_exr_settings_to_texture(texture_asset):
+                    _log(f"Applied settings to: {exr_name}")
+            else:
+                _log_error(f"Could not find imported uasset: {exr_name} to apply settings")
+
+        _log(f"Settings applied to imported textures")
+
         return True
     except Exception as e:
         _log_error(f"Error occurred during fbx import: {e}")
