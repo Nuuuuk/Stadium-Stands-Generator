@@ -205,12 +205,35 @@ def _build_exr_import_task(fbx_file_path, ue_target_path):
     task = _initialize_task(fbx_file_path, ue_target_path)
 
     texture_factory = unreal.TextureFactory()
+    # These settings may not be applied during import
+    # will enforce set them after import
     texture_factory.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
     texture_factory.set_editor_property('lod_group', unreal.TextureGroup.TEXTUREGROUP_16_BIT_DATA)
     texture_factory.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_HDR)
 
     task.set_editor_property('factory', texture_factory)
     return task
+
+def _apply_exr_settings_to_texture(texture_asset):
+    """
+    apply correct settings to imported tex
+    HDR (RGBA16F, no sRGB)
+    No Mipmaps
+    16 Bit Data group
+    sRGB disabled
+    """
+
+    try:
+        texture_asset.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_HDR)
+        texture_asset.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
+        texture_asset.set_editor_property('lod_group', unreal.TextureGroup.TEXTUREGROUP_16_BIT_DATA)
+        texture_asset.set_editor_property('srgb', False)
+        return True
+    except Exception as e:
+        _log_error(f"Failed to apply settings to exr: {e}")
+        return False
+
+
 
 def import_exr(source_path, ue_target_path, character_name=""):
     """
