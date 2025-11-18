@@ -483,4 +483,28 @@ def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=
             if rot_tex:
                 _set_MI_texture_parm(mi_asset, "Rotation Texture", rot_tex)
 
+            # setup bounds from json
+            json_filename = f"{char_name}_{anim_name}_data.json"
+            json_path = os.path.join(data_path, json_filename)
+
+            if os.path.exists(json_path):
+                bound_data = _read_json_bounds(json_path)
+
+                if bound_data:
+                    _set_MI_scalar_parm(mi_asset, "Bound Max X", bound_data.get("Bound Max X"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Max Y", bound_data.get("Bound Max Y"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Max Z", bound_data.get("Bound Max Z"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Min X", bound_data.get("Bound Min X"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Min Y", bound_data.get("Bound Min Y"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Min Z", bound_data.get("Bound Min Z"))
+
+                    _log(f"set bounds for {mi_name} from {json_filename}")
+
+                else:
+                    _log_error(f"Cannot read json data from {json_filename}")
+            else:
+                _log_error(f"JSON file not found: {json_path}")
+
+            _log("=" * 60)
+            _log(f"Material Instance creation for {char_name} complete.")
 
