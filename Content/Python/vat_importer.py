@@ -386,6 +386,20 @@ def _set_MI_scalar_parm(mi_asset, parm_name, value):
         _log_error(f"Error occurred during set scalar parm {parm_name}: {e}")
         return False
 
+def _set_MI_static_switch_parm(mi_asset, parm_name, value):
+    """
+    set static_switch parm for MI
+    """
+    if not mi_asset:
+        return False
+
+    try:
+        unreal.MaterialEditingLibrary.set_material_instance_static_switch_parameter_value(mi_asset, parm_name, value)
+        return True
+    except Exception as e:
+        _log_error(f"Error occurred during set static_switch parm {parm_name}: {e}")
+        return False
+
 def _read_json_bounds(json_path):
     """
     read json file, get bounds, return dict
