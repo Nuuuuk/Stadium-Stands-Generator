@@ -497,6 +497,10 @@ def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=
             if rot_tex:
                 _set_MI_texture_parm(mi_asset, "Rotation Texture", rot_tex)
 
+            # enable Legacy to each char's first MI
+            if idx == 1:
+                _set_MI_static_switch_parm(mi_asset, "Support Legacy Parameters and Instancing", True)
+
             # setup bounds from json
             json_filename = f"{char_name}_{anim_name}_data.json"
             json_path = os.path.join(data_path, json_filename)
