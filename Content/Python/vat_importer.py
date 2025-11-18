@@ -7,6 +7,8 @@ import os
 import json
 import re
 
+from unreal import MaterialInstanceConstantFactoryNew
+
 print("--- [VAT Importer] Attempting to load vat_importer.py ---")
 
 
@@ -55,9 +57,9 @@ def _extract_character_name(filename):
     name = os.path.splitext(filename)[0]
     name = re.sub(r'^(SM_|T_|MI_|M_)', '', name, flags=re.IGNORECASE)
 
-    # exr:
+    # exr/json:
     # T_rp_eric_Angry_pos -> rp_eric
-    match = re.match(r'^(.+?)_([A-Z][a-z]+)_(pos|rot)$', name)
+    match = re.match(r'^(.+?)_([A-Z][a-z]+)_(pos|rot|data)$', name)
     if match:
         return match.group(1)
 
@@ -97,6 +99,19 @@ def _get_names_from_geo(source_path):
             characters.append(character_name)
 
     return characters
+
+def _chars_to_process(source_path, character_name):
+    # which names to import -----------------------------------------
+    requested_characters = _parse_character_input(character_name)
+
+    if requested_characters:
+        _log(f"Using provided characters: {requested_characters}")
+        target_characters = requested_characters
+    else:
+        _log(f"No character input.")
+        target_characters = _get_names_from_geo(source_path)
+
+    return target_characters
 
 # ============================================================================
 # -- 1. import fbx
@@ -223,18 +238,10 @@ def import_exr(source_path, ue_target_path, character_name=""):
     _log(f"Found {len(all_exr_files)} EXR file(s) in tex folder")
 
     # which names to import -----------------------------------------
-    requested_characters = _parse_character_input(character_name)
-
-    if requested_characters:
-        _log(f"Using provided characters: {requested_characters}")
-        target_characters = requested_characters
-    else:
-        _log(f"No character input.")
-        target_characters = _get_names_from_geo(source_path)
-
-        if not target_characters:
-            _log_error(f"Cannot find any character in geo folder")
-            return False
+    target_characters = _chars_to_process(source_path, character_name)
+    if not target_characters:
+        _log_error(f"Cannot find any character in geo folder")
+        return False
 
     # filter exr by names -----------------------------------------
     exr_files = []
@@ -273,3 +280,81 @@ def import_exr(source_path, ue_target_path, character_name=""):
     except Exception as e:
         _log_error(f"Error occurred during fbx import: {e}")
         return False
+
+# ============================================================================
+# -- 3. create Mis
+# ============================================================================
+
+def _get_vat_data_map(data_path):
+    """
+    return {'rp_carla': ['Angry', 'Clap', ...], 'rp_eric': ['Angry', 'Clap', ...]}
+    """
+    data_map = {}
+    if not os.path.isdir(data_path):
+        _log_error(f"Cannot find data folder: {data_path}")
+        return {}
+
+    for f in os.listdir(data_path):
+        if f.lower().endswith('_data.json'):
+            parts = f.replace('.json', '').split('_')
+            if len(parts) >= 2:
+                anim = parts[-1]
+                name = _extract_character_name(f)
+
+            if name not in data_map:
+                data_map[name] = []
+            data_map[name].append(anim)
+
+    # same anmi order
+    for char in data_map:
+        data_map[char].sort()
+
+    _log(f"Data found: {data_map}")
+    return data_map
+
+def _find_texture_asset(ue_target_path, character_name, anim_name, suffix):
+    """
+    find tex assets in UE
+    suffix: 'pos' / 'rot'
+    """
+
+    texture_name = f"T_{character_name}_{anim_name}_{suffix}"
+    asset_path = f"{ue_target_path}/{texture_name}.{texture_name}"
+
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+        return unreal.EditorAssetLibrary.load_asset(asset_path)
+
+    _log_error(f"Cannot find texture uasset '{texture_name}'")
+    return None
+
+def _create_or_get_mi(ue_target_path, mi_name, parent_material):
+    """
+    create or get existing material instance
+    """
+
+    mi_path = f"{ue_target_path}/{mi_name}.{mi_name}"
+
+    if unreal.EditorAssetLibrary.does_asset_exist(mi_path):
+        _log(f"{mi_name} already exists, will update")
+        return unreal.EditorAssetLibrary.load_asset(mi_path)
+
+    try:
+        mi_asset = asset_tools.create_asset(asset_name=mi_name,
+                                            package_path=ue_target_path,
+                                            asset_class=unreal.MaterialInstanceConstant,
+                                            factory=unreal.MaterialInstanceConstantFactoryNew()
+                                            )
+        # set parent
+        if mi_asset and parent_material:
+            mi_asset.set_editor_property('parent', parent_material)
+            unreal.EditorAssetLibrary.save_loaded_asset(mi_asset)
+            _log(f"new MI {mi_name} created")
+            return mi_asset
+        else:
+            _log_error(f"Cannot create MI {mi_name}")
+            return None
+
+    except Exception as e:
+        _log_error(f"Error occurred during create or get MI material: {e}")
+        return None
+
