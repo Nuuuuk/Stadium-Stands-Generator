@@ -386,6 +386,19 @@ def _set_MI_scalar_parm(mi_asset, parm_name, value):
         _log_error(f"Error occurred during set scalar parm {parm_name}: {e}")
         return False
 
+def _read_json_bounds(json_path):
+    """
+    read json file, get bounds, return dict
+    """
+    try:
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+            if isinstance(data, list) and len(data) > 0:
+                return data[0]
+    except Exception as e:
+        _log_error(f"Error occurred during read json {json_path}: {e}")
+        return None
+
 def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=""):
     """
     create or update MIs:
