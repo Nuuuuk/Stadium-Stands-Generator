@@ -59,7 +59,7 @@ def _extract_character_name(filename):
 
     # exr/json:
     # T_rp_eric_Angry_pos -> rp_eric
-    match = re.match(r'^(.+?)_([A-Z][a-z]+)_(pos|rot|data)$', name)
+    match = re.match(r'^(.+?)_([A-Za-z]+[0-9]*)_(pos|rot|data)$', name)
     if match:
         return match.group(1)
 
@@ -201,16 +201,39 @@ def import_fbx(source_path, ue_target_path, character_name=""):
 # -- 2. import exr
 # ============================================================================
 
-def _build_exr_import_task(fbx_file_path, ue_target_path):
-    task = _initialize_task(fbx_file_path, ue_target_path)
+def _build_exr_import_task(exr_file_path, ue_target_path):
+    task = _initialize_task(exr_file_path, ue_target_path)
 
     texture_factory = unreal.TextureFactory()
+    # These settings may not be applied during import
+    # will enforce set them after import
     texture_factory.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
     texture_factory.set_editor_property('lod_group', unreal.TextureGroup.TEXTUREGROUP_16_BIT_DATA)
     texture_factory.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_HDR)
 
     task.set_editor_property('factory', texture_factory)
     return task
+
+def _apply_exr_settings_to_texture(texture_asset):
+    """
+    apply correct settings to imported tex
+    HDR (RGBA16F, no sRGB)
+    No Mipmaps
+    16 Bit Data group
+    sRGB disabled
+    """
+
+    try:
+        texture_asset.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_HDR)
+        texture_asset.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
+        texture_asset.set_editor_property('lod_group', unreal.TextureGroup.TEXTUREGROUP_16_BIT_DATA)
+        texture_asset.set_editor_property('srgb', False)
+        return True
+    except Exception as e:
+        _log_error(f"Failed to apply settings to exr: {e}")
+        return False
+
+
 
 def import_exr(source_path, ue_target_path, character_name=""):
     """
@@ -266,16 +289,30 @@ def import_exr(source_path, ue_target_path, character_name=""):
     # import task
     tasks = []
 
-    for fbx_name in exr_files:
-        full_exr_path = os.path.join(tex_path, fbx_name)
+    for exr_name in exr_files:
+        full_exr_path = os.path.join(tex_path, exr_name)
         task = _build_exr_import_task(full_exr_path, ue_target_path)
         tasks.append(task)
-        _log(f"---> import pending: {fbx_name}")
+        _log(f"---> import pending: {exr_name}")
 
     # import execution
     try:
         asset_tools.import_asset_tasks(tasks)
         _log(f"finished importing {len(tasks)} tasks")
+
+        for exr_name in exr_files:
+            texture_name = os.path.splitext(exr_name)[0]
+            asset_path = f"{ue_target_path}/{texture_name}.{texture_name}"
+
+            if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+                texture_asset = unreal.EditorAssetLibrary.load_asset(asset_path)
+                if _apply_exr_settings_to_texture(texture_asset):
+                    _log(f"Applied settings to: {exr_name}")
+            else:
+                _log_error(f"Could not find imported uasset: {exr_name} to apply settings")
+
+        _log(f"Settings applied to imported textures")
+
         return True
     except Exception as e:
         _log_error(f"Error occurred during fbx import: {e}")
@@ -296,7 +333,7 @@ def _get_vat_data_map(data_path):
 
     for f in os.listdir(data_path):
         if f.lower().endswith('_data.json'):
-            parts = f.replace('.json', '').split('_')
+            parts = f.replace('_data.json', '').split('_')
             if len(parts) >= 2:
                 anim = parts[-1]
                 name = _extract_character_name(f)
@@ -347,7 +384,7 @@ def _create_or_get_mi(ue_target_path, mi_name, parent_material):
         # set parent
         if mi_asset and parent_material:
             mi_asset.set_editor_property('parent', parent_material)
-            unreal.EditorAssetLibrary.save_loaded_asset(mi_asset)
+            # unreal.EditorAssetLibrary.save_loaded_asset(mi_asset)
             _log(f"new MI {mi_name} created")
             return mi_asset
         else:
@@ -357,4 +394,172 @@ def _create_or_get_mi(ue_target_path, mi_name, parent_material):
     except Exception as e:
         _log_error(f"Error occurred during create or get MI material: {e}")
         return None
+
+def _set_MI_texture_parm(mi_asset, parm_name, tex_asset):
+    """
+    set texture parm for MI
+    """
+    if not tex_asset or not mi_asset:
+        return False
+
+    try:
+        unreal.MaterialEditingLibrary.set_material_instance_texture_parameter_value(mi_asset, parm_name, tex_asset)
+        return True
+    except Exception as e:
+        _log_error(f"Error occurred during set texture parm {parm_name}: {e}")
+        return False
+
+def _set_MI_scalar_parm(mi_asset, parm_name, value):
+    """
+    set texture parm for MI
+    """
+    if not mi_asset:
+        return False
+
+    try:
+        unreal.MaterialEditingLibrary.set_material_instance_scalar_parameter_value(mi_asset, parm_name, value)
+        return True
+    except Exception as e:
+        _log_error(f"Error occurred during set scalar parm {parm_name}: {e}")
+        return False
+
+def _set_MI_static_switch_parm(mi_asset, parm_name, value):
+    """
+    set static_switch parm for MI
+    """
+    if not mi_asset:
+        return False
+
+    try:
+        unreal.MaterialEditingLibrary.set_material_instance_static_switch_parameter_value(mi_asset, parm_name, value)
+        return True
+    except Exception as e:
+        _log_error(f"Error occurred during set static_switch parm {parm_name}: {e}")
+        return False
+
+def _read_json_bounds(json_path):
+    """
+    read json file, get bounds, return dict
+    """
+    try:
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+            if isinstance(data, list) and len(data) > 0:
+                return data[0]
+    except Exception as e:
+        _log_error(f"Error occurred during read json {json_path}: {e}")
+        return None
+
+def create_MIs(source_path, ue_target_path, character_name="", base_parent_path=""):
+    """
+    create or update MIs:
+        -if character input: only input characters'
+        -if character empty: find all chars from geo/ then theirs
+    if already existed, update
+
+
+    For each character:
+    1. First MI uses base_parent_path as parent
+    2. Subsequent MIs use the first MI as parent
+    3. Set texture parameters (Pos Tex, Rot Tex)
+    4. Set bounds parameters from JSON data
+    """
+
+    _log("=" * 60)
+    _log("Starting Material Instance creation...")
+
+    # get char-anim mapping from json
+    data_path = os.path.join(source_path, 'data')
+    data_map = _get_vat_data_map(data_path)
+
+    if not data_map:
+        _log_error("No animation data found in data folder")
+        return False
+
+    # which names to import -----------------------------------------
+    target_characters = _chars_to_process(source_path, character_name)
+    if not target_characters:
+        _log_error(f"Cannot find any character in geo folder")
+        return False
+
+    # filter data_map by names -----------------------------------------
+    filtered_data_map = {k: v for k, v in data_map.items() if k in target_characters}
+
+    if not filtered_data_map:
+        _log_error(f"No json data found for characters: {target_characters}")
+        return False
+
+    _log(f"Creating MIs for: {list(filtered_data_map.keys())}")
+
+    base_parent_material = None
+    if base_parent_path:
+        if unreal.EditorAssetLibrary.does_asset_exist(base_parent_path):
+            base_parent_material = unreal.EditorAssetLibrary.load_asset(base_parent_path)
+        else:
+            _log_error(f"Cannot find base_parent_path '{base_parent_path}'")
+            return False
+
+    first_mi = None
+
+    # process each char
+    for char_name, animations in filtered_data_map.items():
+        _log(f"Processing character: {char_name} -- {animations}")
+
+        for idx, anim_name in enumerate(animations, start=1):
+            mi_name = f"MI_VAT_{char_name}_{anim_name}"
+
+            # MI's parent
+            if idx == 1:
+                parent_mat = base_parent_material
+            else:
+                parent_mat = first_mi
+
+            # create or get MI
+            mi_asset = _create_or_get_mi(ue_target_path, mi_name, parent_mat)
+
+            if not mi_asset:
+                _log_error(f"Cannot create or get MI: {mi_name}")
+                continue
+
+            # store first MI
+            if idx == 1:
+                first_mi = mi_asset
+
+            # setup textures
+            pos_tex = _find_texture_asset(ue_target_path, char_name, anim_name, "pos")
+            rot_tex = _find_texture_asset(ue_target_path, char_name, anim_name, "rot")
+
+            if pos_tex:
+                _set_MI_texture_parm(mi_asset, "Position Texture", pos_tex)
+            if rot_tex:
+                _set_MI_texture_parm(mi_asset, "Rotation Texture", rot_tex)
+
+            # enable Legacy to each char's first MI
+            if idx == 1:
+                _set_MI_static_switch_parm(mi_asset, "Support Legacy Parameters and Instancing", True)
+
+            # setup bounds from json
+            json_filename = f"{char_name}_{anim_name}_data.json"
+            json_path = os.path.join(data_path, json_filename)
+
+            if os.path.exists(json_path):
+                bound_data = _read_json_bounds(json_path)
+
+                if bound_data:
+                    _set_MI_scalar_parm(mi_asset, "Bound Max X", bound_data.get("Bound Max X"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Max Y", bound_data.get("Bound Max Y"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Max Z", bound_data.get("Bound Max Z"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Min X", bound_data.get("Bound Min X"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Min Y", bound_data.get("Bound Min Y"))
+                    _set_MI_scalar_parm(mi_asset, "Bound Min Z", bound_data.get("Bound Min Z"))
+
+                    _log(f"set bounds for {mi_name} from {json_filename}")
+
+                else:
+                    _log_error(f"Cannot read json data from {json_filename}")
+            else:
+                _log_error(f"JSON file not found: {json_path}")
+
+            _log("=" * 60)
+            _log(f"Material Instance creation for {char_name} complete.")
 
