@@ -266,11 +266,11 @@ def import_exr(source_path, ue_target_path, character_name=""):
     # import task
     tasks = []
 
-    for fbx_name in exr_files:
-        full_exr_path = os.path.join(tex_path, fbx_name)
+    for exr_name in exr_files:
+        full_exr_path = os.path.join(tex_path, exr_name)
         task = _build_exr_import_task(full_exr_path, ue_target_path)
         tasks.append(task)
-        _log(f"---> import pending: {fbx_name}")
+        _log(f"---> import pending: {exr_name}")
 
     # import execution
     try:
