@@ -201,8 +201,8 @@ def import_fbx(source_path, ue_target_path, character_name=""):
 # -- 2. import exr
 # ============================================================================
 
-def _build_exr_import_task(fbx_file_path, ue_target_path):
-    task = _initialize_task(fbx_file_path, ue_target_path)
+def _build_exr_import_task(exr_file_path, ue_target_path):
+    task = _initialize_task(exr_file_path, ue_target_path)
 
     texture_factory = unreal.TextureFactory()
     # These settings may not be applied during import
