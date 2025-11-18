@@ -63,6 +63,40 @@ def _extract_character_name(filename):
 
     return name
 
+def _get_all_file(source_path, folder='geo', suffix='.fbx'):
+    """
+    get all fbx from geo/
+    """
+    path = os.path.join(source_path, folder)
+    if not os.path.isdir(path):
+        _log_error(f"Cannot find {folder}/ folder in {path}")
+        return []
+    try:
+        all_files = [f for f in os.listdir(path) if f.lower().endswith( suffix )]
+    except Exception as e:
+        _log_error(f"Error reading {folder} folder: {e}")
+        return []
+
+    if not all_files:
+        _log_error(f"Cannot find {suffix} file in {path}")
+        return []
+
+    return all_files
+
+def _get_names_from_geo(source_path):
+    """
+    get all fbx from geo/ then extract names from them
+    """
+
+    all_fbx_files = _get_all_file(source_path, 'geo', '.fbx')
+
+    characters = []
+    for fbx in all_fbx_files:
+        character_name = _extract_character_name(fbx)
+        if character_name and character_name not in characters:
+            characters.append(character_name)
+
+    return characters
 
 # ============================================================================
 # -- 1. import fbx
@@ -96,23 +130,13 @@ def import_fbx(source_path, ue_target_path, character_name=""):
     if already existed, reimport
     """
 
+    _log("=" * 60)
     _log("starting FBX import...")
 
     geo_path = os.path.join(source_path, 'geo')
     _log(f"geo path: {geo_path}")
 
-    if not os.path.isdir(geo_path):
-        _log_error(f"Cannot find geo/ folder in {geo_path}")
-        return []
-    try:
-        all_fbx_files = [f for f in os.listdir(geo_path) if f.lower().endswith('.fbx')]
-    except Exception as e:
-        _log_error(f"Error reading geo folder: {e}")
-        return []
-
-    if not all_fbx_files:
-        _log_error(f"Cannot find fbx file in {geo_path}")
-        return []
+    all_fbx_files = _get_all_file(source_path, 'geo', '.fbx')
 
     _log(f"Found {len(all_fbx_files)} FBX file(s) in total")
 
@@ -158,4 +182,94 @@ def import_fbx(source_path, ue_target_path, character_name=""):
         _log_error(f"Error occurred during fbx import: {e}")
         return []
 
-    
+# ============================================================================
+# -- 2. import exr
+# ============================================================================
+
+def _build_exr_import_task(fbx_file_path, ue_target_path):
+    task = _initialize_task(fbx_file_path, ue_target_path)
+
+    texture_factory = unreal.TextureFactory()
+    texture_factory.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
+    texture_factory.set_editor_property('lod_group', unreal.TextureGroup.TEXTUREGROUP_16_BIT_DATA)
+    texture_factory.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_HDR)
+
+    task.set_editor_property('factory', texture_factory)
+    return task
+
+def import_exr(source_path, ue_target_path, character_name=""):
+    """
+    import exr from tex:
+        -if character input: import only input characters' exrs
+        -if character empty: find all chars from geo/ then import their exrs
+    if already existed, reimport
+    """
+
+    _log("=" * 60)
+    _log("Starting EXR texture import...")
+
+    tex_path = os.path.join(source_path, 'tex')
+    _log(f"tex path: {tex_path}")
+
+    if not os.path.isdir(tex_path):
+        _log_error(f"Cannot find tex/ folder in: {tex_path}")
+        return False
+
+    # Get all EXR files -----------------------------------------
+    all_exr_files = _get_all_file(source_path, 'tex', '.exr')
+    if len(all_exr_files) == 0:
+        return False
+
+    _log(f"Found {len(all_exr_files)} EXR file(s) in tex folder")
+
+    # which names to import -----------------------------------------
+    requested_characters = _parse_character_input(character_name)
+
+    if requested_characters:
+        _log(f"Using provided characters: {requested_characters}")
+        target_characters = requested_characters
+    else:
+        _log(f"No character input.")
+        target_characters = _get_names_from_geo(source_path)
+
+        if not target_characters:
+            _log_error(f"Cannot find any character in geo folder")
+            return False
+
+    # filter exr by names -----------------------------------------
+    exr_files = []
+    filtered_characters = set() #exr has repeated names
+
+    for exr in all_exr_files:
+        character_name = _extract_character_name(exr)
+
+        if character_name in target_characters:
+            filtered_characters.add(character_name)
+            exr_files.append(exr)
+
+    if not exr_files:
+        _log_error(f"No EXR files found for characters: {target_characters}")
+        return False
+
+    # log found names and exr -----------------------------------------
+    for char in filtered_characters:
+        exrs = [e for e in exr_files if _extract_character_name(e) == char]
+        _log(f"{char}: {len(exrs)} exr files found")
+
+    # import task
+    tasks = []
+
+    for fbx_name in exr_files:
+        full_exr_path = os.path.join(tex_path, fbx_name)
+        task = _build_exr_import_task(full_exr_path, ue_target_path)
+        tasks.append(task)
+        _log(f"---> import pending: {fbx_name}")
+
+    # import execution
+    try:
+        asset_tools.import_asset_tasks(tasks)
+        _log(f"finished importing {len(tasks)} tasks")
+        return True
+    except Exception as e:
+        _log_error(f"Error occurred during fbx import: {e}")
+        return False
